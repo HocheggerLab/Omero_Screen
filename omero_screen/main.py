@@ -7,9 +7,9 @@ import pandas as pd
 
 
 @omero_connect
-def main(excel_path=EXCEL_PATH, conn=None):
-    meta_data = MetaData(excel_path)
-    exp_paths = ExpPaths(conn, meta_data)
+def main(plate_id, conn=None):
+    meta_data = MetaData(plate_id, conn)
+    exp_paths = ExpPaths(meta_data)
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, ID in enumerate(meta_data.plate_layout["Well_ID"]):
