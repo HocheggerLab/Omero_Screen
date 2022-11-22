@@ -10,10 +10,8 @@ from tqdm import tqdm
 import matplotlib
 import pathlib
 import glob
-import platform
 
-if platform.system() == 'Darwin':
-    matplotlib.use('MacOSX')  # avoid matplotlib warning about interactive backend
+matplotlib.use('MacOSX')  # avoid matplotlib warning about interactive backend
 
 
 def flatfieldcorr(well, meta_data, exp_paths) -> dict:
@@ -26,7 +24,7 @@ def flatfieldcorr(well, meta_data, exp_paths) -> dict:
     well_pos = f"row_{well.row}_col{well.column}"
     template_path = exp_paths.flatfield_templates
     template_subfolder_path = template_path / f"{well_pos}"
-    if len(glob.glob(f"{str(template_subfolder_path)}/*.tif")) == 4:
+    if pathlib.Path.exists(template_subfolder_path):
         return load_corr_dict(template_subfolder_path, channels)
     return generate_corr_dict(well, well_pos, channels, template_subfolder_path)
 
@@ -108,9 +106,9 @@ def example_fig(data_list, well_pos, channel, path):
 if __name__ == "__main__":
     @omero_connect
     def flatfield_test(conn=None):
-        meta_data = MetaData(948, conn)
+        meta_data = MetaData(1054, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 10636)
+        well = conn.getObject("Well", 11353)
         return flatfieldcorr(well, meta_data, exp_paths)
 
 
