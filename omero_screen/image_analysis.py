@@ -95,6 +95,7 @@ class Image:
             ax[i].imshow(fig_list[i])
             ax[i].title.set_text(title_list[i])
         save_fig(self._paths.quality_ctr, f'{self.well_pos}_segmentation_check')
+        plt.close(fig)
 
     def save_example_tiff(self):
         """Combines arrays from image_dict and saves images as tif files"""
@@ -114,6 +115,7 @@ class ImageProperties:
             featurelist = Defaults.FEATURELIST
         self._meta_data = meta_data
         self.plate_name = meta_data.plate
+        self._well = well
         self._well_id = well.getId()
         self._image = image_obj
         self._overlay = self._overlay_mask()
@@ -164,12 +166,13 @@ class ImageProperties:
             self.plate_name,
             self._meta_data.plate_obj.getId(),
             self._image.well_pos,
-            self._well_id,
+            self._well.row,
+            self._well.column,
             self._image.omero_image.getId(),
             self._image.cell_line,
             self._image.condition,
             ]
-        edited_props_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition"]] \
+        edited_props_data[["experiment", "plate_id", "row", "column", "well_id", "image_id", "cell_line", "condition"]] \
             = cond_list
         return edited_props_data
 
@@ -177,7 +180,8 @@ class ImageProperties:
         """generates df for image quality control saving the median intensity of the image"""
         return pd.DataFrame({"experiment": [self.plate_name],
                              "plate_id": [self._meta_data.plate_obj.getId()],
-                             "well": [self._well_id],
+                             "row": [self._well.row],
+                             "column": [self._well.column],
                              "image_id": [self._image.omero_image.getId()],
                              "channel": [channel],
                              "intensity_median": [np.median(corr_img)]})
