@@ -222,7 +222,7 @@ fabric.properties
 # Additional stuff
 
 *scratch.py
-scratch.ipynp
+*scratch.ipynp
 secrets
 
 
