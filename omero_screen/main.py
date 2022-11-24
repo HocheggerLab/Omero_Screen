@@ -1,7 +1,7 @@
 from omero_screen.general_functions import omero_connect
 from omero_screen.data_structure import MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
-from omero_loop import *
+from omero_screen.omero_loop import *
 import pandas as pd
 
 
