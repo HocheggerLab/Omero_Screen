@@ -34,8 +34,9 @@ class Image:
     def _get_metadata(self):
         self.channels = self._meta_data.channels
         self.cell_line = self._meta_data.well_conditions(self._well.getId())['Cell_Line']
-        self.condition = self._meta_data.well_conditions(self._well.getId())['Condition']
-        self.well_pos = f"row_{self._well.row}_col{self._well.column}"
+        # self.condition = self._meta_data.well_conditions(self._well.getId())['Condition']
+        row_list = list('ABCDEFGHIJKL')
+        self.well_pos = f"{row_list[self._well.row]}self._well.column"
 
     def _get_img_dict(self):
         """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image"""
@@ -54,7 +55,7 @@ class Image:
         :param number: int 0 or 1, 0 for nuclei model, 1 for cell model
         :return: path to model (str)
         """
-        return Defaults.MODEL_DICT[self.cell_line]
+        return Defaults.MODEL_DICT[self.cell_line.replace(" ", "").upper()]
 
     def _n_segmentation(self):
         """perform cellpose segmentation using nuclear mask """
@@ -118,6 +119,7 @@ class ImageProperties:
         self._well = well
         self._well_id = well.getId()
         self._image = image_obj
+        self._cond_dict = image_obj._meta_data.well_conditions(self._well_id)
         self._overlay = self._overlay_mask()
         self.image_df = self._combine_channels(featurelist)
         self.quality_df = self._concat_quality_df()
@@ -166,22 +168,23 @@ class ImageProperties:
             self.plate_name,
             self._meta_data.plate_obj.getId(),
             self._image.well_pos,
-            self._well.row,
-            self._well.column,
+            self._well_id,
             self._image.omero_image.getId(),
-            self._image.cell_line,
-            self._image.condition,
+            # self._image.cell_line,
+            # self._image.condition,
             ]
-        edited_props_data[["experiment", "plate_id", "row", "column", "well_id", "image_id", "cell_line", "condition"]] \
-            = cond_list
+        cond_list.extend(iter(self._cond_dict.values()))
+        col_list = ["experiment", "plate_id", "pos", "well_id", "image_id"]
+        col_list.extend(iter(self._cond_dict.keys()))
+        edited_props_data[col_list] = cond_list
+
         return edited_props_data
 
     def _set_quality_df(self, channel, corr_img):
         """generates df for image quality control saving the median intensity of the image"""
         return pd.DataFrame({"experiment": [self.plate_name],
                              "plate_id": [self._meta_data.plate_obj.getId()],
-                             "row": [self._well.row],
-                             "column": [self._well.column],
+                             "position": [self._image.well_pos],
                              "image_id": [self._image.omero_image.getId()],
                              "channel": [channel],
                              "intensity_median": [np.median(corr_img)]})
@@ -198,16 +201,19 @@ class ImageProperties:
 if __name__ == "__main__":
     @omero_connect
     def feature_extraction_test(conn=None):
-        meta_data = MetaData(1054, conn)
+        meta_data = MetaData(948, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 11353)
+        well = conn.getObject("Well", 10636)
         omero_image = well.getImage(0)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
         image_data = ImageProperties(well, image, meta_data, exp_paths)
         image.segmentation_figure()
-        print(image_data.image_df.head())
-        print(image_data.quality_df.head())
+        df_final = image_data.image_df
+        df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
+        print(df_final)
+
+
 
 
     feature_extraction_test()
