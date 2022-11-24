@@ -1,6 +1,6 @@
 # omero_screen/__init__.py
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 import pathlib
@@ -16,7 +16,7 @@ class Defaults:
     MODEL_DICT = {
         'nuclei': str(PATH / 'data/CellPose_models/Nuclei_Hoechst'),
         'RPE-1': str(PATH / 'data/CellPose_models/RPE-1_Tub_Hoechst'),
-        'HeLa': str(PATH / 'data/CellPose_models/HeLa_Tub_Hoechst'),
+        'HELA': str(PATH / 'data/CellPose_models/HeLa_Tub_Hoechst'),
         'U2OS': str(PATH / 'data/CellPose_models/U2OS_Tub_Hoechst'),
         'MM231': str(PATH / 'data/CellPose_models/U2OS_Tub_Hoechst'),
     }
