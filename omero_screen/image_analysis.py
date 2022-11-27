@@ -36,7 +36,7 @@ class Image:
         self.cell_line = self._meta_data.well_conditions(self._well.getId())['Cell_Line']
         # self.condition = self._meta_data.well_conditions(self._well.getId())['Condition']
         row_list = list('ABCDEFGHIJKL')
-        self.well_pos = f"{row_list[self._well.row]}self._well.column"
+        self.well_pos = f"{row_list[self._well.row]}{self._well.column}"
 
     def _get_img_dict(self):
         """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image"""
