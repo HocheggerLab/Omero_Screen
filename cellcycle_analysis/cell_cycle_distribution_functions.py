@@ -25,12 +25,14 @@ def fun_normalise(data, values, ctr_col, ctr_cond) :
             tmp_bins = 100
             
             for val in values :
-
+                print(val)
                 tmp_data_subset[val + "_log10"] = np.log10(tmp_data[val])
+                #print(tmp_data_subset[val + "_log10"].values())
+                #print(tmp_data_subset.loc[tmp_data_subset[val + "_log10"].math.isnan()])
                 tmp_data_hist = pd.cut(tmp_data_subset[val + "_log10"], tmp_bins).value_counts().sort_index().reset_index()
                 tmp_data_hist.rename(columns = {"index": "interval"}, inplace = True)
                 tmp_data_hist = tmp_data_hist.sort_values(val + "_log10", ascending = False)  
-                tmp_denominator = 10 ** tmp_data_hist["interval"][0].mid
+                tmp_denominator = 10 ** tmp_data_hist["interval"].values[0].mid
                 tmp_data[val + "_norm"] = tmp_data[val] / tmp_denominator
                 
             tmp_output = pd.concat([tmp_output, tmp_data])
@@ -47,8 +49,8 @@ def fun_CellCycle (data,
                    ctr_col = "condition",
                    ctr_cond = "0.0",
                    DAPI_col = "DAPI_total_norm",
-                   EdU_col = "intensity_mean_EdU_cell_norm",
-                   H3P_col = "intensity_mean_H3P_cell_norm") :
+                   EdU_col = "EdU_total_norm",
+                   H3P_col = "H3P_total_norm") :
     
     tmp_output = pd.DataFrame()
     tmp_output_thresholds = pd.DataFrame()

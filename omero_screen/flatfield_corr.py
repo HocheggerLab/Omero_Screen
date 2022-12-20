@@ -79,10 +79,12 @@ def gen_example(well, channel, mask):
     example_img = generate_random_image(well, channel)
     scaled = scale_img(example_img)
     corr_img = example_img / mask
-    corr_scaled = scale_img(corr_img)
+    bg_corr_img = corr_img - np.median(corr_img)
+    bg_corr_img[np.where(bg_corr_img <= 100)] = 100
+    corr_scaled = scale_img(bg_corr_img)
     # order all images for plotting
     return [(scaled, 'original image'), (np.diagonal(example_img), 'diag. intensities'),
-            (corr_scaled, 'corrected image'), (np.diagonal(corr_img), 'diag. intensities'),
+            (corr_scaled, 'corrected image'), (np.diagonal(bg_corr_img), 'diag. intensities'),
             (mask, 'flatfield correction mask')]
 
 
@@ -94,7 +96,7 @@ def example_fig(data_list, well_pos, channel, path):
             plt.imshow(data_tuple[0], cmap='gray')
         else:
             plt.plot(data_tuple[0])
-            plt.ylim(data_tuple[0].min(), 5 * data_tuple[0].min())
+            plt.ylim(data_tuple[0].min(), 10 * data_tuple[0].min())
         plt.title(data_tuple[1])
     # save and close figure
     fig_id = f"{well_pos}_{channel[0]}_flatfield_check"  # using channel name
