@@ -19,8 +19,8 @@ class Defaults:
         'HELA': str(PATH / 'data/CellPose_models/HeLa_Tub_Hoechst'),
         'U2OS': str(PATH / 'data/CellPose_models/U2OS_Tub_Hoechst'),
         'MM231': str(PATH / 'data/CellPose_models/MM231_Tub_Hoechst'),
-        'MM231_Scr': str(PATH / 'data/CellPose_models/MM231_Tub_Hoechst'),
-        'MM231_Gwl': str(PATH / 'data/CellPose_models/MM231_Tub_Hoechst'),
+        'MM231_SCR': str(PATH / 'data/CellPose_models/MM231_Tub_Hoechst'),
+        'MM231_GWL': str(PATH / 'data/CellPose_models/MM231_Tub_Hoechst'),
     }
     NS = 'openmicroscopy.org/omero/client/mapAnnotation'
     FEATURELIST = ['label', 'area', 'intensity_max', 'intensity_mean']

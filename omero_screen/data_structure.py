@@ -1,10 +1,9 @@
+#!/usr/bin/env python
 """Module to organise the experiment data
 
 Reads data from excel_path and stores them
 
 """
-import sys
-sys.path.append('/Users/hh65/Documents/Current_Coding/Omero_Screen')
 
 import pandas as pd
 import pathlib
@@ -77,9 +76,8 @@ class ExpPaths:
 def test_module(conn=None):
     meta_data = MetaData(1107, conn)
     paths = ExpPaths(meta_data)
-    print(meta_data.well_conditions(12760)['Cell_Line'])
+    print(meta_data.well_conditions(12760)['cell_line'])
     print(meta_data.channels)
-
 
 
 
