@@ -3,8 +3,9 @@
 Reads data from excel_path and stores them
 
 """
-# TODO switch to json config file for Defaults
-# TODO switch experiment meta data from excelfile to omero directly
+import sys
+sys.path.append('/Users/hh65/Documents/Current_Coding/Omero_Screen')
+
 import pandas as pd
 import pathlib
 from omero_screen import Defaults, SEPARATOR
@@ -36,7 +37,7 @@ class MetaData:
 
         ann = self.plate_obj.getAnnotation(Defaults.NS)
         channels = dict(ann.getValue())
-        # chaning channel number to integer type
+        # changing channel number to integer type
         for key in channels:
             channels[key] = int(channels[key])
         self.channels = channels
@@ -74,9 +75,9 @@ class ExpPaths:
 
 @omero_connect
 def test_module(conn=None):
-    meta_data = MetaData(1054, conn)
+    meta_data = MetaData(1107, conn)
     paths = ExpPaths(meta_data)
-    print(meta_data.well_conditions(11353)['Cell_Line'])
+    print(meta_data.well_conditions(12760)['Cell_Line'])
     print(meta_data.channels)
 
 
