@@ -1,6 +1,6 @@
 import seaborn as sns
 from data_phase_summary import assign_cell_cycle_phase,dict_wells_corr
-
+from omero.gateway import BlitzGateway
 def plot_scatter_Edu_G2(data_dir,path_export,conn,):
     """
     # %% Plotting & exporting combined EdU ~ DAPI scatter plots
@@ -13,7 +13,6 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                             "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
                             "intensity_mean_EdU_cell",
                             "intensity_mean_H3P_cell")
-
     for experiment in data_IF["experiment"].unique():
         for cell_line in data_IF.loc[data_IF["experiment"] == experiment]["cell_line"].unique():
             for condition in data_IF.loc[(data_IF["experiment"] == experiment) &
@@ -21,7 +20,8 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                 tmp_data = data_IF.loc[(data_IF["experiment"] == experiment) &
                                            (data_IF["cell_line"] == cell_line) &
                                            (data_IF["condition"] == condition)]
-                tmp_thresholds = data_thresholds.loc[data_thresholds["cell_line"] == cell_line]
+
+                # tmp_thresholds = data_thresholds.loc[data_thresholds["cell_line"] == cell_line]
                 sns.set_context(context='talk',
                                 rc={'font.size': 8.0,
                                     'axes.labelsize': 8.0,
@@ -48,10 +48,10 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                     data_IF["intensity_mean_EdU_cell_norm"].max()), )
                 Figure.ax_joint.set_xscale("log")
                 Figure.ax_joint.set_yscale("log")
-                Figure.refline(y=tmp_thresholds["EdU_threshold"].values)
-                Figure.refline(x=tmp_thresholds["DAPI_low_threshold"].values)
-                Figure.refline(x=tmp_thresholds["DAPI_mid_threshold"].values)
-                Figure.refline(x=tmp_thresholds["DAPI_high_threshold"].values)
+                Figure.refline(y=data_thresholds["EdU_threshold"].values)
+                Figure.refline(x=data_thresholds["DAPI_low_threshold"].values)
+                Figure.refline(x=data_thresholds["DAPI_mid_threshold"].values)
+                Figure.refline(x=data_thresholds["DAPI_high_threshold"].values)
                 Figure.set_axis_labels("Integrated Hoechst intensity\n(normalised)\n",
                                        '\nMean EdU intensity\n(normalised)')
                 sns.scatterplot(
@@ -134,8 +134,7 @@ def plot_distribution_H3_P(path_export,data_dir,conn,):
                                        (data_IF["condition"] == condition) &
                                        (data_IF["experiment"] == experiment) &
                                        (data_IF["cell_cycle_detailed"].isin(["G2", "M"]))]
-
-                tmp_thresholds = data_thresholds.loc[data_thresholds["cell_line"] == cell_line]
+                # tmp_thresholds = data_thresholds.loc[data_thresholds["cell_line"] == cell_line]
                 sns.set_context(context='talk',
                                 rc={'font.size': 8.0,
                                     'axes.labelsize': 8.0,
@@ -164,7 +163,7 @@ def plot_distribution_H3_P(path_export,data_dir,conn,):
 
                 Figure.ax_joint.set_yscale("log")
 
-                Figure.refline(y=tmp_thresholds["H3P_threshold"].values)
+                Figure.refline(y=data_thresholds["H3P_threshold"].values)
 
                 Figure.set_axis_labels(" \n \n",
                                        "\nMean H3-P intensity\n(normalised)")
@@ -205,4 +204,10 @@ def plot_distribution_H3_P(path_export,data_dir,conn,):
                 Figure.savefig(path_export + "H3P_" + experiment + "_" + cell_line + "_" + condition + ".pdf", dpi=300)
                 Figure.savefig(path_export + "H3P_" + experiment + "_" + cell_line + "_" + condition + ".png", dpi=1000)
                 del (tmp_data)
+
+if __name__=='__main__':
+    conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
+    conn.connect()
+    plot_distribution_H3_P(data_dir='/Users/haoranyue/Desktop/221102_CellCycleProfile_Exp5_inhibitors_RPE1cdk1as/',path_export='/Users/haoranyue/Desktop/figures/',conn=conn)
+    conn.close()
 

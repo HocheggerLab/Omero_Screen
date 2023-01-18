@@ -62,11 +62,12 @@ def assign_cell_cycle_phase(data, *args):
     nuclei_count=("label", "count"),
     nucleus_area=("area_nucleus", "sum"),
     DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
-    data_IF["Condition"] = data_IF["Condition"].astype(str)
+    data_IF["condition"] = data_IF["condition"].astype(str)
 
     data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_cell", "intensity_mean_H3P_cell",
                                                   "area_cell"])
-    data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="Condition", ctr_cond="NT")
+    # data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="condition", ctr_cond="NT")
+    data_IF, data_thresholds = fun_CellCycle(data=data_IF)
     return data_IF, data_thresholds
 
 def cell_cycle_summary(data_dir,conn):
@@ -77,19 +78,19 @@ def cell_cycle_summary(data_dir,conn):
     :return: A dataframe summarized each cell cycle phase
     """
     data_IF, data_thresholds = assign_cell_cycle_phase(dict_wells_corr(data_dir, conn),"experiment", "plate_id", "well_id", "image_id",
-                            "Cell_Line", "Condition", "Cyto_ID", "cell_id", "area_cell",
+                            "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
                             "intensity_mean_EdU_cell",
                             "intensity_mean_H3P_cell")
     data_cell_cycle = pd.DataFrame()
     for experiment in data_IF["experiment"].unique():
-        for cell_line in data_IF.loc[data_IF["experiment"] == experiment]["Cell_Line"].unique():
+        for cell_line in data_IF.loc[data_IF["experiment"] == experiment]["cell_line"].unique():
             for condition in data_IF.loc[(data_IF["experiment"] == experiment) &
-                                             (data_IF["Cell_Line"] == cell_line)]["Condition"].unique():
-                tmp_data = data_IF.loc[(data_IF["experiment"] == experiment) &(data_IF["Cell_Line"] == cell_line) &
-                                             (data_IF["Condition"] == condition)]
+                                             (data_IF["cell_line"] == cell_line)]["condition"].unique():
+                tmp_data = data_IF.loc[(data_IF["experiment"] == experiment) &(data_IF["cell_line"] == cell_line) &
+                                             (data_IF["condition"] == condition)]
                 n = len(tmp_data)
 
-                tmp_data = tmp_data.groupby(["experiment", "plate_id", "Cell_Line", "Condition", "cell_cycle"],
+                tmp_data = tmp_data.groupby(["experiment", "plate_id", "cell_line", "condition", "cell_cycle"],
                                                 as_index=False).agg(
                         count=("cell_id", "count"),
                         nuclear_area_mean=("nucleus_area", "mean"),
@@ -99,7 +100,7 @@ def cell_cycle_summary(data_dir,conn):
             tmp_data["n"] = n
             tmp_data["percentage"] = (tmp_data["count"] / tmp_data["n"]) * 100
             data_cell_cycle = pd.concat([data_cell_cycle, tmp_data])
-    return data_cell_cycle.groupby(["Cell_Line", "cell_cycle", "Condition"], as_index=False).agg(percentage_mean=("percentage", "mean"), percentage_sd=("percentage", "std"))
+    return data_cell_cycle.groupby(["cell_line", "cell_cycle", "condition"], as_index=False).agg(percentage_mean=("percentage", "mean"), percentage_sd=("percentage", "std"))
 
 
 def save_folder(Path_data,exist_ok=True):
@@ -128,13 +129,10 @@ if __name__ == '__main__':
 
     conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     conn.connect()
-    df = cell_cycle_summary('/Users/hh65/Desktop/221128_DepMap_Exp8_siRNAscreen_Plate1_72hrs/',conn=conn)
+
+    df = cell_cycle_summary('/Users/haoranyue/Desktop/221215_mm231_test01/',conn=conn)
     # df=dict_wells_corr(F_dir='/Users/hh65/Desktop/221128_DepMap_Exp8_siRNAscreen_Plate1_72hrs/',conn=conn)
-    #
-    # df_2=assign_cell_cycle_phase(df,"experiment", "plate_id", "well_id", "image_id",
-    # #                         "Cell_Line", "Condition", "Cyto_ID", "cell_id", "area_cell",
-    # #                         "intensity_mean_EdU_cell",
-    # #                         "intensity_mean_H3P_cell")
+    conn.close()
     df.to_csv('~/Desktop/test.csv')
 
 
