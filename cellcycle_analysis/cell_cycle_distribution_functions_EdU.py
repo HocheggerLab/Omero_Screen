@@ -37,21 +37,21 @@ def fun_normalise(data, values) :
 # %% Defining cell cycle phase asignment function # 2
 """ This function assigns a cell cycle phase
 to each cell based on normalised EdU and DAPI intensities."""
-
+# H3P_col = "intensity_mean_H3P_cell_norm"
 def fun_CellCycle (data,
                    DAPI_col = "DAPI_total_norm",
-                   EdU_col = "intensity_mean_EdU_cell_norm",
-                   H3P_col = "intensity_mean_H3P_cell_norm") :
+                   EdU_col="intensity_mean_EdU_cell_norm",
+                   ):
     
     tmp_output = pd.DataFrame()
-   
+    # "H3P_threshold": [1.4]
     thresholds = {
-        
+        "EdU_threshold": [1.4],
         "DAPI_low_threshold" : [0.6],
         "DAPI_mid_threshold" : [1.4],
         "DAPI_high_threshold" : [2.6],
-        "EdU_threshold" : [1.4],
-        "H3P_threshold" : [1.4]} 
+
+        }
         
     """ Storing established thresholds in a dataframe """
     
@@ -74,23 +74,23 @@ def fun_CellCycle (data,
                 
         elif (dataset[DAPI_col] >= thresholds["DAPI_low_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_mid_threshold"][0]) and (dataset[EdU_col] < thresholds["EdU_threshold"][0]) :
             return "G1"
-                
-        elif (dataset[DAPI_col] >= thresholds["DAPI_mid_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_high_threshold"][0]) and (dataset[EdU_col] < thresholds["EdU_threshold"][0]) and (dataset[H3P_col] < thresholds["H3P_threshold"][0]) :
+            # (dataset[H3P_col] < thresholds["H3P_threshold"][0]
+        elif (dataset[DAPI_col] >= thresholds["DAPI_mid_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_high_threshold"][0]) and (dataset[EdU_col] < thresholds["EdU_threshold"][0]):
             return "G2"
-                
-        elif (dataset[DAPI_col] >= thresholds["DAPI_mid_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_high_threshold"][0]) and (dataset[EdU_col] < thresholds["EdU_threshold"][0]) and (dataset[H3P_col] >= thresholds["H3P_threshold"][0]) :
+        # and (dataset[H3P_col] >= thresholds["H3P_threshold"][0]
+        elif (dataset[DAPI_col] >= thresholds["DAPI_mid_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_high_threshold"][0]) and (dataset[EdU_col] < thresholds["EdU_threshold"][0]) :
             return "M"
                 
-        elif (dataset[DAPI_col] >= thresholds["DAPI_low_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_mid_threshold"][0]) and (dataset[EdU_col] >= thresholds["EdU_threshold"][0]) :
+        elif (dataset[DAPI_col] >= thresholds["DAPI_low_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_mid_threshold"][0]) and (dataset[EdU_col] >= thresholds["EdU_threshold"][0]):
             return "Early S"
                 
         elif (dataset[DAPI_col] >= thresholds["DAPI_mid_threshold"][0]) and (dataset[DAPI_col] < thresholds["DAPI_high_threshold"][0]) and (dataset[EdU_col] >= thresholds["EdU_threshold"][0]) :
             return "Late S"
                 
-        elif (dataset[DAPI_col] >= thresholds["DAPI_high_threshold"][0] and (dataset[EdU_col] < thresholds["EdU_threshold"][0])) :
+        elif (dataset[DAPI_col] >= thresholds["DAPI_high_threshold"][0]) :
             return "Polyploid"
                 
-        elif (dataset[DAPI_col] >= thresholds["DAPI_high_threshold"][0] and (dataset[EdU_col] >= thresholds["EdU_threshold"][0])) :
+        elif (dataset[DAPI_col] >= thresholds["DAPI_high_threshold"][0] ) :
             return "Polyploid (replicating)"
                 
         else :

@@ -49,12 +49,11 @@ def dict_wells_corr(F_dir,conn):
 
 
 def assign_cell_cycle_phase(data, *args):
-    """
-    # %% Selecting parameters of interest and aggregating counts of nuclei and total cellular DAPI signal
-      %% Normalising selected parameters & assigning cell cycle phases
+    """Selecting parameters of interest and aggregating counts of nuclei and total cellular DAPI signal
+    and normalising selected parameters & assigning cell cycle phases
 
-    :param data:A data frame that including the necessary parameters
-    :param args:interesting parameters used for group data frame to aggregating counts of nuclei and total cellular DAPI signal
+    :param data:Dataframe,
+    :param args:interesting parameters used for group data to aggregating counts of nuclei and total cellular DAPI signal
     :return: data_IF (A dataframe assigned a cell cycle phase to each cell), data_thresholds (threshold values of normalised integrated DAPI intensities)
     """
 
@@ -110,17 +109,19 @@ def save_folder(Path_data,exist_ok=True):
     :return: This method does not return any value.
     """
     # path_data = "/Users/Lab/Desktop/CDK1ArrestCheck_20hr_1/"
-    path_export = Path_data+ "/Figures/"
+    path_export_figure = Path_data+ "/Figures/"
+    path_export_cellcycle_summary = Path_data + "/cellcycle_summary/"
     if exist_ok==True:
-        os.makedirs(path_export, exist_ok=True)
+        os.makedirs(path_export_figure, exist_ok=True)
+        os.makedirs(path_export_cellcycle_summary, exist_ok=True)
     else:
-        isExist = os.path.exists(path_export)
+        isExist = os.path.exists(path_export_figure)
         try:
             if isExist==False:
-                os.makedirs(path_export)
+                os.makedirs(path_export_figure)
         except FileExistsError:
             print('File already exists')
-    return path_export
+    return path_export_figure,path_export_cellcycle_summary
 
 
 
@@ -130,7 +131,7 @@ if __name__ == '__main__':
     conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     conn.connect()
 
-    df = cell_cycle_summary('/Users/haoranyue/Desktop/221215_mm231_test01/',conn=conn)
+    df = cell_cycle_summary('/Users/haoranyue/Desktop/221102_CellCycleProfile_Exp5_inhibitors_RPE1cdk1as/',conn=conn)
     # df=dict_wells_corr(F_dir='/Users/hh65/Desktop/221128_DepMap_Exp8_siRNAscreen_Plate1_72hrs/',conn=conn)
     conn.close()
     df.to_csv('~/Desktop/test.csv')

@@ -9,8 +9,17 @@ import matplotlib.pyplot as plt
 
 # %% Defining data normalisation function
 
-def fun_normalise(data, values) :
-    
+def fun_normalise(data, values):
+    """
+    The function takes the parameters of the input values and normalizes the corresponding column of input data
+
+    :param data: DataFrame
+    :param values: list, default values=["DAPI_total", "intensity_mean_EdU_cell", "intensity_mean_H3P_cell", "area_cell"]
+           the specify parameters in  values should be same as corresponding column name of input data
+           for example, the parameter "DAPI_total"  is the column name in data.
+    :return: DataFrame
+           the data will include extra more val+'_log10',val+'_norm' as columns. For example 'DAPI_total_log10','DAPI_total_norm'
+    """
     tmp_output = pd.DataFrame()
     
     for experiment in data["experiment"].unique() :

@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from cell_cycle_distribution_functions import fun_normalise, fun_CellCycle
+from cellcycle_analysis.cell_cycle_distribution_functions_EdU import fun_normalise, fun_CellCycle
 from os import listdir
 from omero.gateway import BlitzGateway
 
@@ -64,26 +64,27 @@ def assign_cell_cycle_phase(data, *args):
         nucleus_area=("area_nucleus", "sum"),
         DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
     data_IF["condition"] = data_IF["condition"].astype(str)
-
-    data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_cell", "intensity_mean_H3P_cell",
-                                                  "area_cell"])
+    # "intensity_mean_H3P_cell","intensity_mean_EdU_cell"
+    data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_cell",
+                                                  "area_cell"],)
     # data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="condition", ctr_cond="NT")
     data_IF, data_thresholds = fun_CellCycle(data=data_IF)
+    print(data_IF.groupby('condition'))
     return data_IF, data_thresholds
 
-
+# "intensity_mean_EdU_cell",
 def cell_cycle_summary(data_dir, conn):
     """
     # %% Establishing proportions (%) of cell cycle phases
     calling functions of dict_wells_corr and assign_cell_cycle_phase to get the data_IF, data_thresholds
     :param data_dir: the path of RAW data frame
-    :return: A dataframe summarized each cell cycle phase
+    :return: A dataframe summarized each cell cycle phase"intensity_mean_H3P_cell"
     """
     data_IF, data_thresholds = assign_cell_cycle_phase(dict_wells_corr(data_dir, conn), "experiment", "plate_id",
                                                        "well_id", "image_id",
                                                        "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
                                                        "intensity_mean_EdU_cell",
-                                                       "intensity_mean_H3P_cell")
+                                                       )
     data_cell_cycle = pd.DataFrame()
     for experiment in data_IF["experiment"].unique():
         for cell_line in data_IF.loc[data_IF["experiment"] == experiment]["cell_line"].unique():
@@ -100,9 +101,9 @@ def cell_cycle_summary(data_dir, conn):
                     DAPI_total_mean=("DAPI_total_norm", "mean"),
                     area_cell_mean=("area_cell_norm", "mean"))
                 # calculate proportions for each cell cycle phase
-            tmp_data["n"] = n
-            tmp_data["percentage"] = (tmp_data["count"] / tmp_data["n"]) * 100
-            data_cell_cycle = pd.concat([data_cell_cycle, tmp_data])
+                tmp_data["n"] = n
+                tmp_data["percentage"] = (tmp_data["count"] / tmp_data["n"]) * 100
+                data_cell_cycle = pd.concat([data_cell_cycle, tmp_data])
     return data_cell_cycle.groupby(["cell_line", "cell_cycle", "condition"], as_index=False).agg(
         percentage_mean=("percentage", "mean"), percentage_sd=("percentage", "std"))
 
@@ -130,8 +131,10 @@ def save_folder(Path_data, exist_ok=True):
 if __name__ == '__main__':
     conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     conn.connect()
-
-    df = cell_cycle_summary('/Users/hh65/Desktop/221215_mm231_test01/', conn=conn)
+    df = cell_cycle_summary('/Users/haoranyue/Desktop/221102_CellCycleProfile_Exp5_inhibitors_RPE1cdk1as/', conn=conn)
+    print(df)
+    # df = cell_cycle_summary('/Users/hh65/Desktop/221215_mm231_test01/', conn=conn)
     # df=dict_wells_corr(F_dir='/Users/hh65/Desktop/221128_DepMap_Exp8_siRNAscreen_Plate1_72hrs/',conn=conn)
+
+    df.to_csv('/Users/haoranyue/Desktop/230601Gwl_Tub_EdU_final_data_cellcycle_summary.csv')
     conn.close()
-    df.to_csv('~/Desktop/test.csv')

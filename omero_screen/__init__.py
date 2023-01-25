@@ -12,6 +12,8 @@ class Defaults:
     QUALITY_CONTROL = "quality_control"
     IMGS_CORR = "images_corrected"
     TEMP_WELL_DATA = "temp_well_data"
+    PLOT_FIGURES="figures"
+    DATA_CELLCYCLE_SUMMARY="cellcycle_summary"
     PATH = pathlib.Path.cwd().parent
     MODEL_DICT = {
         'nuclei': 'Nuclei_Hoechst',
