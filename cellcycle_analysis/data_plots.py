@@ -53,20 +53,20 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                 Figure.refline(x=data_thresholds["DAPI_high_threshold"].values)
                 Figure.set_axis_labels("Integrated Hoechst intensity\n(normalised)\n",
                                        '\nMean EdU intensity\n(normalised)')
-                sns.scatterplot(
-                    data=tmp_data,
-                    x="DAPI_total_norm",
-                    y="intensity_mean_EdU_cell_norm",
-                    color='#000000',
-                    hue="cell_cycle_detailed",
-                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
-                             "M": "#CC6677", "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344",
-                             "Sub-G1": "#c7c7c7"},
-                    ec="none",
-                    linewidth=0,
-                    alpha=0.1,
-                    legend=False,
-                    ax=Figure.ax_joint)
+                # sns.scatterplot(
+                #     data=tmp_data,
+                #     x="DAPI_total_norm",
+                #     y="intensity_mean_EdU_cell_norm",
+                #     color='#000000',
+                #     hue="cell_cycle_detailed",
+                #     palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
+                #              "M": "#CC6677", "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344",
+                #              "Sub-G1": "#c7c7c7"},
+                #     ec="none",
+                #     linewidth=0,
+                #     alpha=0.1,
+                #     legend=False,
+                #     ax=Figure.ax_joint)
                 sns.histplot(
                     data=tmp_data,
                     x="DAPI_total_norm",
@@ -207,6 +207,6 @@ def plot_distribution_H3_P(path_export,data_dir,conn,):
 if __name__=='__main__':
     conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     conn.connect()
-    plot_scatter_Edu_G2(data_dir='/Users/haoranyue/Desktop/221215_mm231_test01/',path_export='/Users/haoranyue/Desktop/figures/',conn=conn)
+    plot_scatter_Edu_G2(data_dir='/Users/haoranyue/Desktop/221215_mm231_test01/',path_export='/Users/haoranyue/Desktop/images/',conn=conn)
     conn.close()
 
