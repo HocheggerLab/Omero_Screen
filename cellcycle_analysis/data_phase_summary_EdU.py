@@ -35,6 +35,7 @@ def dict_wells_corr(F_dir, conn):
     data_raw = pd.DataFrame()
     for file in list_files:
         tmp_data = pd.read_csv(F_dir + "/single_cell_data/" + file, sep=",")
+        tmp_data.columns = [header.replace('Hoechst', 'DAPI') for header in tmp_data.columns]
         if 'plate_id' and 'well_id' in tmp_data.columns.values.tolist():
             tmp_plates = tmp_data["plate_id"].unique()
             Dict_plate_well = plate_get_well(tmp_plates, conn=conn)

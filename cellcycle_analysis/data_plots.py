@@ -42,9 +42,13 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                                     'xtick.minor.size': 2.5,
                                     'ytick.minor.size': 2.5,
                                     'legend.title_fontsize': 3})
-                Figure = sns.JointGrid(ratio=3,ylim=(
+
+                Figure = sns.JointGrid(ratio=3,
+                                       ylim=(
                     # data_IF["intensity_mean_H3P_cell_norm"].min() - data_IF["intensity_mean_H3P_cell_norm"].min() * 0.2,
-                    data_IF["intensity_mean_EdU_cell_norm"].max()), )
+                    data_IF["intensity_mean_EdU_cell_norm"].min()*1.2,
+                    data_IF["intensity_mean_EdU_cell_norm"].max()),
+                                       )
                 Figure.ax_joint.set_xscale("log")
                 Figure.ax_joint.set_yscale("log")
                 Figure.refline(y=data_thresholds["EdU_threshold"].values)
@@ -53,20 +57,21 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                 Figure.refline(x=data_thresholds["DAPI_high_threshold"].values)
                 Figure.set_axis_labels("Integrated Hoechst intensity\n(normalised)\n",
                                        '\nMean EdU intensity\n(normalised)')
-                # sns.scatterplot(
-                #     data=tmp_data,
-                #     x="DAPI_total_norm",
-                #     y="intensity_mean_EdU_cell_norm",
-                #     color='#000000',
-                #     hue="cell_cycle_detailed",
-                #     palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
-                #              "M": "#CC6677", "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344",
-                #              "Sub-G1": "#c7c7c7"},
-                #     ec="none",
-                #     linewidth=0,
-                #     alpha=0.1,
-                #     legend=False,
-                #     ax=Figure.ax_joint)
+
+                sns.scatterplot(
+                    data=tmp_data,
+                    x="DAPI_total_norm",
+                    y="intensity_mean_EdU_cell_norm",
+                    color='#000000',
+                    hue="cell_cycle_detailed",
+                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
+                             "M": "#CC6677", "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344",
+                             "Sub-G1": "#c7c7c7"},
+                    ec="none",
+                    linewidth=0,
+                    alpha=0.1,
+                    legend=False,
+                    ax=Figure.ax_joint)
                 sns.histplot(
                     data=tmp_data,
                     x="DAPI_total_norm",
@@ -85,20 +90,22 @@ def plot_scatter_Edu_G2(data_dir,path_export,conn,):
                     element="step",
                     stat='density',
                     fill=True)
+
                 Figure.ax_joint.text(
                     data_IF["DAPI_total_norm"].min() + data_IF["DAPI_total_norm"].min() * 0.4,
                     data_IF["intensity_mean_EdU_cell_norm"].max() - data_IF["intensity_mean_EdU_cell_norm"].max() * 0.5,
                     f"{cell_line}\n{condition} µM",
                     horizontalalignment="left",
-                    size=7,
+                    size=6,
                     color="#000000",
                     weight="normal")
+
                 Figure.ax_joint.text(
-                    data_IF["DAPI_total_norm"].max() - data_IF["DAPI_total_norm"].min() * 0.4,
+                    data_IF["DAPI_total_norm"].max() - data_IF["DAPI_total_norm"].max()*0.7 ,
                     data_IF["intensity_mean_EdU_cell_norm"].max() - data_IF["intensity_mean_EdU_cell_norm"].max() * 0.3,
                     str(len(tmp_data)),
                     horizontalalignment="right",
-                    size=7,
+                    size=6,
                     color="#000000",
                     weight="normal")
                 Figure.fig.set_figwidth(2)
@@ -207,6 +214,6 @@ def plot_distribution_H3_P(path_export,data_dir,conn,):
 if __name__=='__main__':
     conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     conn.connect()
-    plot_scatter_Edu_G2(data_dir='/Users/haoranyue/Desktop/221215_mm231_test01/',path_export='/Users/haoranyue/Desktop/images/',conn=conn)
+    plot_scatter_Edu_G2(data_dir='/Users/haoranyue/Desktop/221102_CellCycleProfile_Exp5_inhibitors_RPE1cdk1as/',path_export='/Users/haoranyue/Desktop/result_files/figures/',conn=conn)
     conn.close()
 
