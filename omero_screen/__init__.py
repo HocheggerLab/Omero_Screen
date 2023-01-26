@@ -16,13 +16,13 @@ class Defaults:
     DATA_CELLCYCLE_SUMMARY="cellcycle_summary"
     PATH = pathlib.Path.cwd().parent
     MODEL_DICT = {
-        'nuclei': 'Nuclei_Hoechst',
-        'RPE-1': 'RPE-1_Tub_Hoechst',
-        'HELA': 'HeLa_Tub_Hoechst',
-        'U2OS': 'U2OS_Tub_Hoechst',
-        'MM231': 'MM231_Tub_Hoechst',
-        'MM231_SCR': 'MM231_Tub_Hoechst',
-        'MM231_GWL': 'MM231_Tub_Hoechst',
+        'nuclei': 'Nuclei_DAPI',
+        'RPE-1': 'RPE-1_Tub_DAPI',
+        'HELA': 'HeLa_Tub_DAPI',
+        'U2OS': 'U2OS_Tub_DAPI',
+        'MM231': 'MM231_Tub_DAPI',
+        'MM231_SCR': 'MM231_Tub_DAPI',
+        'MM231_GWL': 'MM231_Tub_DAPI',
     }
     NS = 'openmicroscopy.org/omero/client/mapAnnotation'
     FEATURELIST = ['label', 'area', 'intensity_max', 'intensity_mean']

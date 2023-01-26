@@ -57,7 +57,7 @@ class Image:
 
     def _n_segmentation(self):
         """perform cellpose segmentation using nuclear mask """
-        model = models.CellposeModel(gpu=False, model_type='/Users/haoranyue/PycharmProjects/Omero_Screen_2/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
+        model = models.CellposeModel(gpu=False, model_type='/Users/hh65/Documents/Current_Coding/Omero_Screen/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
 
         n_channels = [[0, 0]]
         n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
@@ -67,7 +67,7 @@ class Image:
 
     def _c_segmentation(self):
         """perform cellpose segmentation using cell mask """
-        model = models.CellposeModel(gpu=False, model_type='/Users/haoranyue/PycharmProjects/Omero_Screen_2/data/CellPose_models/'+self._get_models())
+        model = models.CellposeModel(gpu=False, model_type='/Users/hh65/Documents/Current_Coding/Omero_Screen/data/CellPose_models/'+self._get_models())
         c_channels = [[2, 1]]
         # combine the 2 channel numpy array for cell segmentation with the nuclei channel
         comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
