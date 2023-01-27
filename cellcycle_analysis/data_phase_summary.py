@@ -56,17 +56,33 @@ def assign_cell_cycle_phase(data, *args):
     :param args:interesting parameters used for group data to aggregating counts of nuclei and total cellular DAPI signal
     :return: data_IF (A dataframe assigned a cell cycle phase to each cell), data_thresholds (threshold values of normalised integrated DAPI intensities)
     """
+    data_IF = data.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
+                                "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
 
+    "intensity_mean_EdU_cyto"]).agg(
+
+        nuclei_count=("label", "count"),
+        area_nucleus=("area_nucleus", "sum"),
+        DAPI_total=("integrated_int_DAPI", "sum"),
+        EdU_mean=("intensity_mean_EdU_nucleus", "mean"))
+        #H3P_mean=("intensity_mean_H3P_nucleus", "mean")).reset_index()
+
+    # !!! Correct nuclear EdU and H3P intensities using respective cytoplasmic intensities
+
+    data_IF["EdU_mean_corr_norm"] = data_IF["EdU_mean"] / data_IF["intensity_mean_EdU_cyto"]
+    #data_IF["H3P_mean_corr"] = data_IF["H3P_mean"] / data_IF["intensity_mean_H3P_cyto"]
+    data_IF["Condition"] = data_IF["Condition"].astype(str)
     data_IF = data.groupby(list(args)).agg(
     nuclei_count=("label", "count"),
     nucleus_area=("area_nucleus", "sum"),
     DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
     data_IF["condition"] = data_IF["condition"].astype(str)
 
-    data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_cell", "intensity_mean_H3P_cell",
-                                                  "area_cell"])
-    # data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="condition", ctr_cond="NT")
-    data_IF, data_thresholds = fun_CellCycle(data=data_IF)
+    data_IF = fun_normalise(data=data_IF,
+                            values=["DAPI_total", "EdU_mean_corr_norm", "H3P_mean_corr", "area_cell", "area_nucleus"])
+
+    # !!! Specify DAPI, EdU and H3P columns (use normalised corrected values for EdU and H3P)
+    data_IF, data_thresholds = fun_CellCycle(data=data_IF, DAPI_col="DAPI_total_norm", EdU_col="EdU_mean_corr_norm")
     return data_IF, data_thresholds
 
 def cell_cycle_summary(data_dir,conn):
@@ -78,8 +94,7 @@ def cell_cycle_summary(data_dir,conn):
     """
     data_IF, data_thresholds = assign_cell_cycle_phase(dict_wells_corr(data_dir, conn),"experiment", "plate_id", "well_id", "image_id",
                             "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
-                            "intensity_mean_EdU_cell",
-                            "intensity_mean_H3P_cell")
+                            "EdU_mean_corr_norm")
     data_cell_cycle = pd.DataFrame()
     for experiment in data_IF["experiment"].unique():
         for cell_line in data_IF.loc[data_IF["experiment"] == experiment]["cell_line"].unique():

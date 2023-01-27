@@ -40,8 +40,7 @@ to each cell based on normalised EdU and DAPI intensities."""
 # H3P_col = "intensity_mean_H3P_cell_norm"
 def fun_CellCycle (data,
                    DAPI_col = "DAPI_total_norm",
-                   EdU_col="intensity_mean_EdU_cell_norm",
-                   ):
+                   EdU_col="EdU_mean_corr_norm"):
     
     tmp_output = pd.DataFrame()
     # "H3P_threshold": [1.4]

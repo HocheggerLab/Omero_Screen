@@ -1,9 +1,9 @@
+from omero_screen import Defaults, SEPARATOR
 from omero_screen.general_functions import omero_connect
 from omero_screen.data_structure import MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
-from omero_screen.omero_loop import *
-from cellcycle_analysis.data_phase_summary_EdU import *
-from cellcycle_analysis.data_plots import plot_scatter_Edu_G2
+from omero_screen.omero_loop import well_loop
+from cellcycle_analysis import cellcycle_analysis
 import pandas as pd
 
 
@@ -24,10 +24,11 @@ def main(plate_id, conn=None):
             df_quality_control = pd.concat([df_quality_control, well_quality])
     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
     df_final.to_csv(exp_paths.final_data / f"{meta_data.plate}_final_data.csv")
-    df_quality_control.to_csv(exp_paths.quality_ctr / f"{meta_data.plate}_quality_data.csv")
-    df_cellcycle_summary_data=cell_cycle_summary(data_dir=str(exp_paths.path), conn=conn)
-    df_cellcycle_summary_data.to_csv(exp_paths.cellcycle_summary_data/f"{meta_data.plate}_cellcycle_summary_data.csv")
-    plot_scatter_Edu_G2(data_dir=str(exp_paths.path), path_export=str(exp_paths.figures), conn=conn, )
+    if 'H3P' in meta_data.channels.keys():
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate)
+    else:
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+
 
 if __name__ == '__main__':
-    main(1107)
+    main(1125)

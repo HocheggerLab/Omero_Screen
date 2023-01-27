@@ -23,7 +23,7 @@ def save_fig(path: pathlib, fig_id: str, tight_layout=True, fig_extension="pdf",
     :return: None, saves Figure in poth
     """
     dest = path / f"{fig_id}.{fig_extension}"
-    # print("Saving figure", fig_id)
+    print("Saving figure", fig_id)
     if tight_layout:
         plt.tight_layout()
     plt.savefig(dest, format=fig_extension, dpi=resolution)

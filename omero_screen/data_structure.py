@@ -36,6 +36,8 @@ class MetaData:
 
         ann = self.plate_obj.getAnnotation(Defaults.NS)
         channels = dict(ann.getValue())
+        if 'Hoechst' in channels:
+            channels['DAPI'] = channels.pop('Hoechst')
         # changing channel number to integer type
         for key in channels:
             channels[key] = int(channels[key])

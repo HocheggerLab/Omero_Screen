@@ -57,7 +57,7 @@ class Image:
 
     def _n_segmentation(self):
         """perform cellpose segmentation using nuclear mask """
-        model = models.CellposeModel(gpu=False, model_type='/Users/hh65/Documents/Current_Coding/Omero_Screen/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
+        model = models.CellposeModel(gpu=False, model_type=Defaults.MODEL_DICT['nuclei'])
 
         n_channels = [[0, 0]]
         n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
@@ -67,7 +67,7 @@ class Image:
 
     def _c_segmentation(self):
         """perform cellpose segmentation using cell mask """
-        model = models.CellposeModel(gpu=False, model_type='/Users/hh65/Documents/Current_Coding/Omero_Screen/data/CellPose_models/'+self._get_models())
+        model = models.CellposeModel(gpu=False, model_type=self._get_models())
         c_channels = [[2, 1]]
         # combine the 2 channel numpy array for cell segmentation with the nuclei channel
         comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
@@ -170,13 +170,12 @@ class ImageProperties:
             self._image.well_pos,
             self._well_id,
             self._image.omero_image.getId(),
-            # self._image.cell_line,
-            # self._image.condition,
             ]
         cond_list.extend(iter(self._cond_dict.values()))
         col_list = ["experiment", "plate_id", "well", "well_id", "image_id"]
         col_list.extend(iter(self._cond_dict.keys()))
-        edited_props_data[col_list] = cond_list
+        col_list_edited = [entry.lower() for entry in col_list]
+        edited_props_data[col_list_edited] = cond_list
 
         return edited_props_data
 
