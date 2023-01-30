@@ -4,6 +4,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import seaborn as sns
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -12,13 +13,13 @@ def cellcycle_analysis(df, path, plate, H3=True):
     figure_path = path / 'figures'
     data_path.mkdir(exist_ok=True)
     figure_path.mkdir(exist_ok=True)
-    df.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
+
     if H3:
-        cc_data, data_thresholds = generate_cellcycle_stats(df)
+        cc_data, data_thresholds = generate_cellcycle_stats(df, data_path, plate)
         generate_plots(figure_path, cc_data, data_thresholds)
         H3_plots(figure_path, cc_data, data_thresholds)
     else:
-        cc_data, data_thresholds = generate_cellcycle_stats_EdU(df)
+        cc_data, data_thresholds = generate_cellcycle_stats_EdU(df, data_path, plate)
         generate_plots(figure_path, cc_data, data_thresholds)
 
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
@@ -30,11 +31,12 @@ def cellcycle_stats(df, path, plate, col_name):
                      df.groupby(['well', 'cell_line', 'condition'])['experiment'].count()) * 100
     df_final = df_percentage.reset_index()
     df_final.to_csv(path / f"{plate}_{col_name}_well.csv")
-    df_mean = df_final.groupby(['condition', col_name])['experiment'].agg(['mean', 'std']).reset_index()
+    df_mean = df_final.groupby(['condition', 'cell_line', col_name])['experiment'].agg(['mean', 'std']).reset_index()
     df_mean.to_csv(path / f"{plate}_{col_name}_mean.csv")
 
 
-def generate_cellcycle_stats(df):
+def generate_cellcycle_stats(df, data_path, plate):
+    df.condition = df.condition.str.replace('/', '+')  # / makes problem when saving files later
     data_IF = df.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell",
 
@@ -68,11 +70,12 @@ def generate_cellcycle_stats(df):
     cc_data, data_thresholds = fun_CellCycle(data=norm_data_IF, DAPI_col="DAPI_total_norm",
                                              EdU_col="EdU_mean_corr_norm",
                                              H3P_col="H3P_mean_corr_norm")
-
+    cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
 
-def generate_cellcycle_stats_EdU(df):
+def generate_cellcycle_stats_EdU(df, data_path, plate):
+    df.condition = df.condition.str.replace('/', '+')  # / makes problem when saving files later
     data_IF = df.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell",
 
@@ -100,9 +103,9 @@ def generate_cellcycle_stats_EdU(df):
 
     # !!! Specify DAPI, EdU and H3P columns (use normalised corrected values for EdU and H3P)
 
-    cc_data, data_thresholds = fun_CellCycle(data=norm_data_IF, DAPI_col="DAPI_total_norm",
-                                             EdU_col="EdU_mean_corr_norm")
-
+    cc_data, data_thresholds = fun_CellCycle_EdU(data=norm_data_IF, DAPI_col="DAPI_total_norm",
+                                                 EdU_col="EdU_mean_corr_norm")
+    cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
 
@@ -241,7 +244,6 @@ def fun_CellCycle_EdU(data, DAPI_col, EdU_col):
     :param data:
     :param DAPI_col:
     :param EdU_col:
-    :param H3P_col:
     :return:
     """
     tmp_output = pd.DataFrame()
@@ -336,7 +338,6 @@ def scale_data(data_IF):
 def cellcycle_plots(path, data_figure_scatter, data_thresholds, experiment, cell_line, condition):
     """
     Plotting & exporting combined EdU ~ DAPI scatter plots (Updated with the 0.1 percentile cut-off)
-    :param data_IF:
     :param data_thresholds:
     :return:
     """
@@ -405,8 +406,8 @@ def cellcycle_plots(path, data_figure_scatter, data_thresholds, experiment, cell
         y=y_axis,
         color='#000000',
         hue="cell_cycle_detailed",
-        palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677", "M": "#CC6677",
-                 "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344", "Sub-G1": "#c7c7c7"},
+        palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677", "G2/M": "#CC6677",
+                 "M": "#CC6677", "Polyploid": "#b39bcf", "Polyploid (replicating)": "#e3b344", "Sub-G1": "#c7c7c7"},
         ec="none",
         linewidth=0,
         alpha=0.1,
@@ -453,12 +454,12 @@ def cellcycle_plots(path, data_figure_scatter, data_thresholds, experiment, cell
     plt.close(Figure.fig)
     del (tmp_data)
 
+
 def H3_plots(path, data_IF, data_thresholds):
-# %% Plotting & exporting distributions of H3-P signal in G2/M cells (Updated with the 0.1 percentile cut-off)
+    # %% Plotting & exporting distributions of H3-P signal in G2/M cells (Updated with the 0.1 percentile cut-off)
 
     x_axis = "cell_line"
     y_axis = "H3P_mean_corr_norm"
-
 
     y_limits = [np.percentile(data_IF[y_axis], 0.1), np.percentile(data_IF[y_axis], 99.9)]
 
@@ -470,7 +471,7 @@ def H3_plots(path, data_IF, data_thresholds):
             print(cell_line + " : " + condition)
 
             tmp_data = data_figure_scatter.loc[(data_figure_scatter["cell_line"] == cell_line) &
-                                               (data_figure_scatter["condition"] == condition) ]
+                                               (data_figure_scatter["condition"] == condition)]
 
             sns.set_context(context='talk',
                             rc={'font.size': 8.0,
@@ -518,7 +519,8 @@ def H3_plots(path, data_IF, data_thresholds):
                     x=x_axis,
                     y=y_axis,
                     color='#000000',
-                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677", "M": "#fcba03",
+                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
+                             "M": "#fcba03",
                              "Polyploid": "#9230d9", "Debris": "#a8a8a8"},
                     ec="none",
                     linewidth=0,
@@ -549,7 +551,8 @@ def H3_plots(path, data_IF, data_thresholds):
                     y=y_axis,
                     color='#000000',
                     hue="cell_cycle_detailed",
-                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677", "M": "#fcba03",
+                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
+                             "M": "#fcba03",
                              "Polyploid": "#9230d9", "Debris": "#a8a8a8"},
                     ec="none",
                     linewidth=0,
@@ -576,7 +579,8 @@ def H3_plots(path, data_IF, data_thresholds):
                     y=y_axis,
                     color='#000000',
                     hue="cell_cycle_detailed",
-                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677", "M": "#fcba03",
+                    palette={"G1": "#6794db", "Early S": "#aed17d", "Late S": "#63a678", "G2": "#CC6677",
+                             "M": "#fcba03",
                              "Polyploid": "#9230d9", "Debris": "#a8a8a8"},
                     ec="none",
                     size=3,

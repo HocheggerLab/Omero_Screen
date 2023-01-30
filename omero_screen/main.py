@@ -17,7 +17,7 @@ def main(plate_id, conn=None):
         ann = well.getAnnotation(Defaults.NS)
         cell_line = dict(ann.getValue())['cell_line']
         if cell_line != 'Empty':
-            print(f"Analysing well row:{well.row}/col:{well.column} - {count + 1} of {meta_data.plate_length}.\n{SEPARATOR}")
+            print(f"\n{SEPARATOR} \nAnalysing well row:{well.row}/col:{well.column} - {count + 1} of {meta_data.plate_length}.\n{SEPARATOR}")
             flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
             well_data, well_quality = well_loop(well, meta_data, exp_paths, flatfield_dict)
             df_final = pd.concat([df_final, well_data])
@@ -25,7 +25,7 @@ def main(plate_id, conn=None):
     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
     df_final.to_csv(exp_paths.final_data / f"{meta_data.plate}_final_data.csv")
     if 'H3P' in meta_data.channels.keys():
-        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate)
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
     else:
         cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
 
