@@ -13,8 +13,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import GridSearchCV
-
-
+from joblib import dump, load
 
 def df_confusion(label,pred):
     """
@@ -92,12 +91,45 @@ def check_classifier(clf,x_train,x_test,y_train,y_test):
         sns.heatmap(cm, annot=True,fmt='g',ax=axs[index])
     plt.show()
 
+
+def check_pretrained_model(data, pretrained_svm,
+                           features=['intensity_max_DAPI_nucleus', 'intensity_mean_DAPI_nucleus',
+                                     'integrated_int_DAPI', 'intensity_max_DAPI_cell', 'intensity_mean_DAPI_cell',
+                                     'DAPI_total_norm',
+                                     'intensity_max_Tub_nucleus', 'intensity_mean_Tub_nucleus',
+                                     'intensity_max_Tub_cell', 'intensity_mean_Tub_cell', 'intensity_max_Tub_cyto',
+                                     'intensity_mean_Tub_cyto',
+                                     'area_cell_norm',
+                                     'area_nucleus_norm',
+                                     ], label='cell_cycle_detailed'):
+    scaler = StandardScaler().fit(data[features])
+
+    # load the pre-trained model
+    pretrained_svm = load(pretrained_svm)
+    predicted = pretrained_svm.predict(scaler.transform(data[features]))
+    accuracy_train = accuracy_score(data[label], predicted)
+    print(f'accuracy {accuracy_train}')
+    cm = df_confusion(data[label], predicted)
+    fig, axs = plt.subplots(ncols=1, nrows=1, figsize=(12, 8))
+    sns.heatmap(cm, annot=True, fmt='g', ax=axs)
+    plt.show()
+
+
+
+
+
+
 def preprecess_classifier(data,features=[ 'intensity_max_DAPI_nucleus', 'intensity_mean_DAPI_nucleus',
        'integrated_int_DAPI',  'intensity_max_DAPI_cell','intensity_mean_DAPI_cell',
        'intensity_max_Tub_nucleus','intensity_mean_Tub_nucleus', 'intensity_max_Tub_cell','intensity_mean_Tub_cell', 'intensity_max_Tub_cyto','intensity_mean_Tub_cyto',
        'DAPI_total_norm',
        'area_cell_norm',
        'area_nucleus_norm',
+
+
+
+
+
        ],label='cell_cycle_detailed'):
     """
     preprocessing of data
