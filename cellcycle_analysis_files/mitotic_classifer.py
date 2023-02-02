@@ -25,6 +25,45 @@ def df_confusion(label,pred):
     """
     return pd.DataFrame(confusion_matrix(label, pred,labels=['G2',"M"]),columns=['pred_G2','pred_M'],index=['ground_true_G2','ground_true_M'])
 
+def df_confusion_G1_S_G2M(label,pred):
+    """
+    transfer confusion matrix to data frame
+    :param label: ground truth label
+    :param pred: predicted label
+    :return: DataFrame
+    """
+    return pd.DataFrame(confusion_matrix(label, pred,labels=['G1','S',"G2/M"]),columns=['pred_G1','pred_S','pred_G2/M'],index=['ground_true_G1','ground_true_S','ground_true_G2/M'])
+
+def check_classifier_G1_S_G2M(clf,x_train,x_test,y_train,y_test):
+    """
+    check the accuracy of selected classifier with train and test set, also get the confusion matrix to show the prediction label with ground truth label
+    :param clf: classifier
+    :param x_train: train features
+    :param x_test: test features
+    :param y_train: ground truth label of training set
+    :param y_test:  ground truth label of test set
+    :return: hemtmap of confusion matrix
+    """
+    clf_hp=make_pipeline(StandardScaler(),clf)
+    clf_hp.fit(x_train,y_train)
+    predicted_train = clf_hp.predict(x_train)
+    accuracy_train = accuracy_score(y_train,predicted_train)
+    print(f'the accuracy of model run with train data {accuracy_train}')
+    predicted_test = clf_hp.predict(x_test)
+    accuracy_test = accuracy_score(y_test,predicted_test)
+    print(f'the accuracy of model run with test data {accuracy_test}')
+    cm_train = df_confusion_G1_S_G2M(y_train,predicted_train)
+    cm_test = df_confusion_G1_S_G2M(y_test, predicted_test)
+    CM=[cm_train,cm_test]
+    title=['train_data','test_data']
+    fig, axs= plt.subplots(ncols=1,nrows=2,figsize=(8,5))
+    for index,cm  in enumerate(CM):
+        axs[index].set_title(f'{title[index]}')
+        sns.heatmap(cm, annot=True,fmt='g',ax=axs[index])
+    plt.show()
+
+
+
 def check_classifier(clf,x_train,x_test,y_train,y_test):
     """
     check the accuracy of selected classifier with train and test set, also get the confusion matrix to show the prediction label with ground truth label
