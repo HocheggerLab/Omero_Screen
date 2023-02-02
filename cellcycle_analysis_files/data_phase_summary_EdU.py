@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from cellcycle_analysis.cell_cycle_distribution_functions_EdU import fun_normalise, fun_CellCycle
+from cell_cycle_distribution_functions_EdU import fun_normalise, fun_CellCycle
 from omero_screen.general_functions import omero_connect
 from os import listdir
 from omero.gateway import BlitzGateway
@@ -50,29 +50,69 @@ def dict_wells_corr(F_dir, conn):
     data_raw.loc[:, "cell_id"] = data_raw.groupby(["plate_id", "well_id", "image_id", "Cyto_ID"]).ngroup()
     return data_raw
 
-
 def assign_cell_cycle_phase(data, *args):
-    """
-    # %% Selecting parameters of interest and aggregating counts of nuclei and total cellular DAPI signal
-      %% Normalising selected parameters & assigning cell cycle phases
+    """Selecting parameters of interest and aggregating counts of nuclei and total cellular DAPI signal
+    and normalising selected parameters & assigning cell cycle phases
 
-    :param data:A data frame that including the necessary parameters
-    :param args:interesting parameters used for group data frame to aggregating counts of nuclei and total cellular DAPI signal
+    :param data:Dataframe,
+    :param args:interesting parameters used for group data to aggregating counts of nuclei and total cellular DAPI signal
     :return: data_IF (A dataframe assigned a cell cycle phase to each cell), data_thresholds (threshold values of normalised integrated DAPI intensities)
     """
+    data_IF = data.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
+                                "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
 
-    data_IF = data.groupby(list(args)).agg(
+    "intensity_mean_EdU_cyto"]).agg(
+
         nuclei_count=("label", "count"),
-        nucleus_area=("area_nucleus", "sum"),
-        DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
+        area_nucleus=("area_nucleus", "sum"),
+        DAPI_total=("integrated_int_DAPI", "sum"),
+        EdU_mean=("intensity_mean_EdU_nucleus", "mean"))
+        #H3P_mean=("intensity_mean_H3P_nucleus", "mean")).reset_index()
+
+    # !!! Correct nuclear EdU and H3P intensities using respective cytoplasmic intensities
+    data_IF.columns
+    data_IF["EdU_mean_corr_norm"] = data_IF["EdU_mean"] / data_IF["intensity_mean_EdU_cyto"]
+    #data_IF["H3P_mean_corr"] = data_IF["H3P_mean"] / data_IF["intensity_mean_H3P_cyto"]
+    data_IF["Condition"] = data_IF["Condition"].astype(str)
+    data_IF = data.groupby(list(args)).agg(
+    nuclei_count=("label", "count"),
+    nucleus_area=("area_nucleus", "sum"),
+    DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
     data_IF["condition"] = data_IF["condition"].astype(str)
-    # "intensity_mean_H3P_cell","intensity_mean_EdU_cell"
-    data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_nucleus",
-                                                  "area_cell"],)
-    # data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="condition", ctr_cond="NT")
-    data_IF, data_thresholds = fun_CellCycle(data=data_IF)
-    print(data_IF.groupby('condition'))
+
+    data_IF = fun_normalise(data=data_IF,
+                            values=["DAPI_total", "EdU_mean_corr_norm", "area_cell", "area_nucleus"])
+
+    # !!! Specify DAPI, EdU and H3P columns (use normalised corrected values for EdU and H3P)
+    data_IF, data_thresholds = fun_CellCycle(data=data_IF, DAPI_col="DAPI_total_norm", EdU_col="EdU_mean_corr_norm")
     return data_IF, data_thresholds
+
+
+
+
+# def assign_cell_cycle_phase(data, *args):
+#     """
+#     # %% Selecting parameters of interest and aggregating counts of nuclei and total cellular DAPI signal
+#       %% Normalising selected parameters & assigning cell cycle phases
+#
+#     :param data:A data frame that including the necessary parameters
+#     :param args:interesting parameters used for group data frame to aggregating counts of nuclei and total cellular DAPI signal
+#     :return: data_IF (A dataframe assigned a cell cycle phase to each cell), data_thresholds (threshold values of normalised integrated DAPI intensities)
+#     """
+#
+#     data_IF = data.groupby(list(args)).agg(
+#         nuclei_count=("label", "count"),
+#         nucleus_area=("area_nucleus", "sum"),
+#         DAPI_total=("integrated_int_DAPI", "sum")).reset_index()
+#
+#     data_IF["condition"] = data_IF["condition"].astype(str)
+#     # "intensity_mean_H3P_cell","intensity_mean_EdU_cell"
+#     data_IF = fun_normalise(data=data_IF, values=["DAPI_total", "intensity_mean_EdU_nucleus",
+#                                                   "area_cell"],)
+#     # data_IF, data_thresholds = fun_CellCycle(data=data_IF, ctr_col="condition", ctr_cond="NT")
+#     data_IF, data_thresholds = fun_CellCycle(data=data_IF)
+#     print(data_IF.groupby('condition'))
+#     return data_IF, data_thresholds
 
 # "intensity_mean_EdU_cell",
 def cell_cycle_summary(data_dir, conn):
@@ -133,14 +173,18 @@ def save_folder(Path_data, exist_ok=True):
 if __name__ == '__main__':
     # conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
     # conn.connect()
-    import_path = '/Users/hh65/Library/CloudStorage/OneDrive-UniversityofSussex/Ryan/230601 Gwl_Tub_EdU/'
+    import_path = '/Users/haoranyue/Desktop/221011_Cellcycleprofile_Exp3_siRNAs_MM231_RPE1_U2OS/'
     export_path = '~/Desktop/test.csv'
 
     @omero_connect
     def generate_summary(conn=None):
-        df = cell_cycle_summary(import_path, conn=conn)
-        print(df)
-        df.to_csv(export_path)
+        df_1=assign_cell_cycle_phase(dict_wells_corr(import_path, conn), "experiment", "plate_id",
+                                "well_id", "image_id",
+                                "cell_line", "condition", "Cyto_ID", "cell_id", "area_cell",
+                                "intensity_mean_EdU_nucleus",
+                                )
+        df_2= cell_cycle_summary(import_path, conn=conn)
+
 
 
     generate_summary()

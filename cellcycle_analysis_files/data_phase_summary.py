@@ -143,8 +143,7 @@ def save_folder(Path_data,exist_ok=True):
 
 if __name__ == '__main__':
 
-    conn = BlitzGateway('hy274', 'omeroreset', host='ome2.hpc.susx.ac.uk')
-    conn.connect()
+
 
     df = cell_cycle_summary('/Users/haoranyue/Desktop/221102_CellCycleProfile_Exp5_inhibitors_RPE1cdk1as/',conn=conn)
     # df=dict_wells_corr(F_dir='/Users/hh65/Desktop/221128_DepMap_Exp8_siRNAscreen_Plate1_72hrs/',conn=conn)

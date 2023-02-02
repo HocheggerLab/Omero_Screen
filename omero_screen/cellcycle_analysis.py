@@ -601,3 +601,6 @@ def H3_plots(path, data_IF, data_thresholds):
             Figure.savefig(path / f"H3P_{cell_line}_{condition}.pdf", dpi=300)
             Figure.savefig(path / f"H3P__{cell_line}_{condition}.png", dpi=1000)
             del (tmp_data)
+
+
+if __name__=='__main__':
