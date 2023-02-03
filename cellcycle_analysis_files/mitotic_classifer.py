@@ -107,13 +107,14 @@ def check_pretrained_model(data, pretrained_svm,
     # load the pre-trained model
     pretrained_svm = load(pretrained_svm)
     predicted = pretrained_svm.predict(scaler.transform(data[features]))
+    data['SVM_predicted_detail']=predicted
     accuracy_train = accuracy_score(data[label], predicted)
     print(f'accuracy {accuracy_train}')
     cm = df_confusion(data[label], predicted)
     fig, axs = plt.subplots(ncols=1, nrows=1, figsize=(12, 8))
     sns.heatmap(cm, annot=True, fmt='g', ax=axs)
     plt.show()
-
+    return data
 
 
 

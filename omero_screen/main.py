@@ -10,7 +10,9 @@ import pandas as pd
 @omero_connect
 def main(plate_id, conn=None):
     meta_data = MetaData(plate_id, conn)
+    print(meta_data.plate)
     exp_paths = ExpPaths(meta_data)
+    print(exp_paths.path)
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):
@@ -32,3 +34,4 @@ def main(plate_id, conn=None):
 
 if __name__ == '__main__':
     main(928)
+
