@@ -9,7 +9,9 @@ from cellpose import models
 from skimage import measure, io
 import pandas as pd
 import numpy as np
+from PIL import Image
 
+import skimage
 import matplotlib.pyplot as plt
 
 
@@ -63,6 +65,9 @@ class Image:
         n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
 
         # return cleaned up mask using filter function
+        # skimage.io.imsave(f"/Users/haoranyue/Desktop/221215_mm231_test01/images/check{10}.tif",filter_segmentation(n_mask_array))
+        # plt.imshow()
+        # plt.show()
         return filter_segmentation(n_mask_array)
 
     def _c_segmentation(self):
@@ -73,6 +78,8 @@ class Image:
         comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
         c_masks_array, c_flows, c_styles = model.eval(comb_image, channels=c_channels)
         # return cleaned up mask using filter function
+        # skimage.io.imsave(f"/Users/haoranyue/Desktop/221215_mm231_test01/images/check_tub{10}.tif",
+        #                   filter_segmentation(c_masks_array))
         return filter_segmentation(c_masks_array)
 
     def _get_cyto(self):
@@ -98,6 +105,7 @@ class Image:
         save_fig(self._paths.quality_ctr, f'{self.well_pos}_segmentation_check')
         plt.close(fig)
 
+    #
     def save_example_tiff(self):
         """Combines arrays from image_dict and saves images as tif files"""
         comb_image = np.dstack(list(self.img_dict.values()))
@@ -198,23 +206,23 @@ class ImageProperties:
 
 
 if __name__ == "__main__":
-    print(Defaults.MODEL_DICT['nuclei'])
-    # @omero_connect
-    # def feature_extraction_test(conn=None):
-    #     meta_data = MetaData(1107, conn)
-    #     exp_paths = ExpPaths(meta_data)
-    #     well = conn.getObject("Well", 12757)
-    #     omero_image = well.getImage(0)
-    #     flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
-    #     print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
-    #     image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
-    #     image_data = ImageProperties(well, image, meta_data, exp_paths)
-    #     image.segmentation_figure()
-    #     df_final = image_data.image_df
-    #     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
-    #     print(df_final)
+    # print(Defaults.MODEL_DICT['nuclei'])
+    @omero_connect
+    def feature_extraction_test(conn=None):
+        meta_data = MetaData(1107, conn)
+        exp_paths = ExpPaths(meta_data)
+        well = conn.getObject("Well", 12767)
+        omero_image = well.getImage(0)
+        flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
+        print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
+        image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
+        image_data = ImageProperties(well, image, meta_data, exp_paths)
+        image.segmentation_figure()
+        df_final = image_data.image_df
+        df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
+        print(df_final)
 
 
 
 
-    # feature_extraction_test()
+    feature_extraction_test()
