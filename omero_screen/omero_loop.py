@@ -29,7 +29,7 @@ def well_loop(well, meta_data, exp_paths, flatfield_dict, stardist_model):
         image_number = len(list(well.listChildren()))
         for number in tqdm.tqdm(range(image_number)):
             omero_img = well.getImage(number)
-            if 'tub' in meta_data.channels.keys():
+            if 'Tub' in meta_data.channels.keys():
                 image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
                 image_data = ImageProperties(well, image, meta_data, exp_paths)
             else:
