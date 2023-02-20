@@ -68,6 +68,7 @@ def aggregate_imgs(well, channel):
     agg = ImageAggregator(60)
     for i, img in enumerate(well.listChildren()):
         image = well.getImage(i)
+
         image_array = generate_image(image, channel[1])
         agg.add_image(image_array)
     blurred_agg_img = agg.get_gaussian_image(30)
@@ -110,10 +111,11 @@ if __name__ == "__main__":
     @omero_connect
     def flatfield_test(conn=None):
         meta_data = MetaData(948, conn)
-        exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 10636)
-        return flatfieldcorr(well, meta_data, exp_paths)
+        print(meta_data.channels)
+        # exp_paths = ExpPaths(meta_data)
+        # well = conn.getObject("Well", 10636)
+        # return flatfieldcorr(well, meta_data, exp_paths)
 
 
     flatfield_corr = flatfield_test()
-    print(flatfield_corr['DAPI'].shape)
+    # print(flatfield_corr['DAPI'].shape)

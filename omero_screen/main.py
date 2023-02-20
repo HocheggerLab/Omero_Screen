@@ -12,9 +12,7 @@ import pandas as pd
 def main(plate_id, conn=None):
     stardist_model = StarDist2D.from_pretrained('2D_versatile_fluo')
     meta_data = MetaData(plate_id, conn)
-    print(meta_data.plate)
     exp_paths = ExpPaths(meta_data)
-    print(exp_paths.path)
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):

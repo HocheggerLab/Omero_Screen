@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from omero_screen import Defaults
 from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
@@ -7,12 +11,9 @@ from omero_screen.general_functions import save_fig, generate_image, filter_segm
 
 from cellpose import models
 from skimage import measure, io
-import pandas as pd
-import numpy as np
-from PIL import Image
 
-import skimage
-import matplotlib.pyplot as plt
+from CNN_pytorch.load_model import *
+from PIL import Image as Img
 
 
 
@@ -33,6 +34,76 @@ class Image:
         self.n_mask = self._n_segmentation()
         self.c_mask = self._c_segmentation()
         self.cyto_mask = self._get_cyto()
+        self.data=self._get_data(width=20)
+        # self.data.to_csv('/Users/haoranyue/Desktop/mm.csv')
+        self.data_inter_M=self._analysis()
+
+    def _get_data(self, width=25):
+        empty_channel = np.zeros((self.img_dict['DAPI'].shape[0], self.img_dict['DAPI'].shape[1]))
+        comb_image = np.dstack([empty_channel, self.img_dict['Tub'], self.img_dict['DAPI']]).astype('float32')
+        comb_image=(comb_image - comb_image.mean()) / comb_image.std()
+        data_list =[]
+        df_props = pd.DataFrame(measure.regionprops_table(self.c_mask, properties=('label', 'centroid',)))
+        for label in (df_props['label'].tolist()):
+            # centroid = region.centroid
+            i = df_props.loc[df_props['label'] == label, 'centroid-0'].item()
+
+            j = df_props.loc[df_props['label'] == label, 'centroid-1'].item()
+
+            imin = int(round(max(0, i - width)))
+            imax = int(round(min(self.c_mask.shape[0], i + width + 1)))
+            jmin = int(round(max(0, j - width)))
+            jmax = int(round(min(self.c_mask.shape[1], j + width + 1)))
+            comb_image[:, :, 0] = self.c_mask
+            comb_image[:, :, 0] = (comb_image[:, :, 0] == label) * np.ones(
+                (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1]))
+            # plt.imshow(comb_image[:, :, 1])
+            # plt.show()
+            # comb_image[:, :, 1] = (((comb_image[:, :, 0] == label)!=0) * comb_image[:, :, 1])
+            # plt.imshow(comb_image[:, :, 1])
+            # plt.show()
+            # plt.imshow(comb_image[:, :, 2])
+            # plt.show()
+            # comb_image[:, :, 2] = ((comb_image[:, :, 0] == label)!= 0) * comb_image[:, :, 2]
+            # plt.imshow(comb_image[imin:imax, jmin:jmax].copy())
+            # plt.show()
+            box = np.array(comb_image[imin:imax, jmin:jmax].copy())
+            # plt.imshow(box)
+            # plt.show()
+
+            data_list.append(np.array(np.stack(tuple(box), axis=0)).astype(object))
+
+        # data_array=np.asarray(data_list,dtype=object)
+        # np.save('/Users/haoranyue/Desktop/mm_1.npy', data_list)
+        df_props['cell_data']=pd.Series(data_list)
+        # np.save('/Users/haoranyue/Desktop/mm.npy', df_props)
+        return df_props
+
+    def _analysis(self):
+        images_list=self.data['cell_data'].tolist()
+        probs = self.predict_images(image_list=images_list)
+        self.data['inter_M']=pd.Series(probs)
+        replace_dict = {0: 'inter', 1: 'M'}
+        self.data['inter_M']=self.data['inter_M'].replace(replace_dict)
+        return self.data
+
+    def predict_images(self,image_list):
+        model = trained_model()
+        img_transform = data_transform()
+        # Convert the list of PIL images to PyTorch tensors
+
+        tensor_list = [img_transform(np.array(image).astype(np.uint8)) for image in image_list]
+        # Stack the tensors into a single batch
+        batch = torch.stack(tensor_list).to(torch.device('mps'))
+        # Pass the batch through the model
+        with torch.no_grad():
+            outputs = model(batch).to(torch.device('mps'))
+        # Get the predicted class probabilities
+        probs = torch.nn.functional.softmax(outputs, dim=1)
+        _,pre=probs.max(1)
+        return pre.tolist()
+
+
 
     def _get_metadata(self):
         self.channels = self._meta_data.channels
@@ -168,6 +239,7 @@ class ImageProperties:
             nucleus_data['integrated_int_DAPI'] = nucleus_data['intensity_mean_DAPI_nucleus'] * nucleus_data[
                 'area_nucleus']
         cell_data = self._get_properties(self._image.c_mask, channel, 'cell', featurelist)
+        cell_data=pd.merge(cell_data, self._image.data_inter_M, how="outer", on=["label"]).dropna(axis=0, how='any')
         cyto_data = self._get_properties(self._image.cyto_mask, channel, 'cyto', featurelist)
         merge_1 = pd.merge(cell_data, cyto_data, how="outer", on=["label"]).dropna(axis=0, how='any')
         merge_1 = merge_1.rename(columns={'label': 'Cyto_ID'})
@@ -207,20 +279,22 @@ class ImageProperties:
         return pd.concat(df_list)
 
 
-# test
+
 
 
 if __name__ == "__main__":
     # print(Defaults.MODEL_DICT['nuclei'])
     @omero_connect
     def feature_extraction_test(conn=None):
-        meta_data = MetaData(1107, conn)
+        meta_data = MetaData(928, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 12767)
+        well = conn.getObject("Well", 9647)
+        print(well.getImage(0))
         omero_image = well.getImage(0)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
         image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
+        image.data_inter_M.to_csv('/Users/haoranyue/Desktop/venv/mm_1.csv')
         image_data = ImageProperties(well, image, meta_data, exp_paths)
         image.segmentation_figure()
         df_final = image_data.image_df
