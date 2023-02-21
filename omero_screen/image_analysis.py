@@ -8,14 +8,14 @@ from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
     color_label
-
+import skimage
 from cellpose import models
 from skimage import measure, io
 
 from CNN_pytorch.load_model import *
 from PIL import Image as Img
 
-
+import cv2
 
 class Image:
     """
@@ -34,11 +34,11 @@ class Image:
         self.n_mask = self._n_segmentation()
         self.c_mask = self._c_segmentation()
         self.cyto_mask = self._get_cyto()
-        self.data=self._get_data(width=20)
+        self.data=self._get_data(width=35)
         # self.data.to_csv('/Users/haoranyue/Desktop/mm.csv')
         self.data_inter_M=self._analysis()
 
-    def _get_data(self, width=25):
+    def _get_data(self, width=35):
         empty_channel = np.zeros((self.img_dict['DAPI'].shape[0], self.img_dict['DAPI'].shape[1]))
         comb_image = np.dstack([empty_channel, self.img_dict['Tub'], self.img_dict['DAPI']]).astype('float32')
         comb_image=(comb_image - comb_image.mean()) / comb_image.std()
@@ -57,26 +57,19 @@ class Image:
             comb_image[:, :, 0] = self.c_mask
             comb_image[:, :, 0] = (comb_image[:, :, 0] == label) * np.ones(
                 (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1]))
-            # plt.imshow(comb_image[:, :, 1])
-            # plt.show()
-            # comb_image[:, :, 1] = (((comb_image[:, :, 0] == label)!=0) * comb_image[:, :, 1])
-            # plt.imshow(comb_image[:, :, 1])
-            # plt.show()
-            # plt.imshow(comb_image[:, :, 2])
-            # plt.show()
-            # comb_image[:, :, 2] = ((comb_image[:, :, 0] == label)!= 0) * comb_image[:, :, 2]
-            # plt.imshow(comb_image[imin:imax, jmin:jmax].copy())
-            # plt.show()
+            comb_image[:, :, 1] = (((comb_image[:, :, 0])!=0) * comb_image[:, :, 1])
+
+
+            comb_image[:, :, 2] = ((comb_image[:, :, 0])!=0) * comb_image[:, :, 2]
+
+
+
             box = np.array(comb_image[imin:imax, jmin:jmax].copy())
-            # plt.imshow(box)
-            # plt.show()
-
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype(object))
-
         # data_array=np.asarray(data_list,dtype=object)
         # np.save('/Users/haoranyue/Desktop/mm_1.npy', data_list)
         df_props['cell_data']=pd.Series(data_list)
-        # np.save('/Users/haoranyue/Desktop/mm.npy', df_props)
+
         return df_props
 
     def _analysis(self):
@@ -288,7 +281,7 @@ if __name__ == "__main__":
     def feature_extraction_test(conn=None):
         meta_data = MetaData(928, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 9647)
+        well = conn.getObject("Well", 9674)
         print(well.getImage(0))
         omero_image = well.getImage(0)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
