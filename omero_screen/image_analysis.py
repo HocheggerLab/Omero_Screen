@@ -34,11 +34,11 @@ class Image:
         self.n_mask = self._n_segmentation()
         self.c_mask = self._c_segmentation()
         self.cyto_mask = self._get_cyto()
-        self.data=self._get_data(width=35)
+        self.data=self._get_data(width=20)
         # self.data.to_csv('/Users/haoranyue/Desktop/mm.csv')
         self.data_inter_M=self._analysis()
 
-    def _get_data(self, width=35):
+    def _get_data(self, width=20):
         empty_channel = np.zeros((self.img_dict['DAPI'].shape[0], self.img_dict['DAPI'].shape[1]))
         comb_image = np.dstack([empty_channel, self.img_dict['Tub'], self.img_dict['DAPI']]).astype('float32')
         comb_image=(comb_image - comb_image.mean()) / comb_image.std()
@@ -55,24 +55,21 @@ class Image:
             jmin = int(round(max(0, j - width)))
             jmax = int(round(min(self.c_mask.shape[1], j + width + 1)))
             comb_image[:, :, 0] = self.c_mask
-            comb_image[:, :, 0] = (comb_image[:, :, 0] == label) * np.ones(
-                (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1]))
-            comb_image[:, :, 1] = (((comb_image[:, :, 0])!=0) * comb_image[:, :, 1])
-
-
-            comb_image[:, :, 2] = ((comb_image[:, :, 0])!=0) * comb_image[:, :, 2]
-
-
-
-            box = np.array(comb_image[imin:imax, jmin:jmax].copy())
+            red_channel= (comb_image[:, :, 0] == label) * np.ones(
+                (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1])).copy()
+            green_channel=((red_channel!=0) * comb_image[:, :, 1]).copy()
+            blue_channel=((red_channel!=0) * comb_image[:, :, 2]).copy()
+            tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
+            box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype(object))
+            del box,red_channel,green_channel,blue_channel,tem_comb_image
         # data_array=np.asarray(data_list,dtype=object)
         # np.save('/Users/haoranyue/Desktop/mm_1.npy', data_list)
         df_props['cell_data']=pd.Series(data_list)
 
         return df_props
 
-    def _analysis(self):
+    def _mitotic_analysis(self):
         images_list=self.data['cell_data'].tolist()
         probs = self.predict_images(image_list=images_list)
         self.data['inter_M']=pd.Series(probs)
@@ -132,11 +129,7 @@ class Image:
 
         n_channels = [[0, 0]]
         n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
-
         # return cleaned up mask using filter function
-        # skimage.io.imsave(f"/Users/haoranyue/Desktop/221215_mm231_test01/images/check{10}.tif",filter_segmentation(n_mask_array))
-        # plt.imshow()
-        # plt.show()
         return filter_segmentation(n_mask_array)
 
     def _c_segmentation(self):
@@ -147,8 +140,6 @@ class Image:
         comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
         c_masks_array, c_flows, c_styles = model.eval(comb_image, channels=c_channels)
         # return cleaned up mask using filter function
-        # skimage.io.imsave(f"/Users/haoranyue/Desktop/221215_mm231_test01/images/check_tub{10}.tif",
-        #                   filter_segmentation(c_masks_array))
         return filter_segmentation(c_masks_array)
 
     def _get_cyto(self):
