@@ -14,8 +14,6 @@ def gallery_data(df,pras,inter_phase,total,images_per_row):
 
     sample = random.sample(nor_list, total)
     print(sample[0].dtype)
-    plt.imshow(sample[0][:,:,0])
-    print(sample[0][:,:,0])
     plt.show()
     plot_digits_2(sample, images_per_row=images_per_row)
 
@@ -30,9 +28,6 @@ def plot_digits_2(sample, images_per_row=5, **options):
     # Create a batch of processed images to display
     images = []
     for image in sample:
-        print(image)
-        plt.imshow(image)
-        plt.show()
         percentiles = np.percentile(image, (1, 100))
         scaled=exposure.rescale_intensity(image, in_range=tuple(percentiles))
         # plt.imshow(scaled)

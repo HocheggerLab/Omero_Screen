@@ -63,7 +63,7 @@ class Image:
             box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
             # plt.imshow(box)
             # plt.show()
-            data_list.append(np.array(np.stack(tuple(box), axis=0)).astype(object))
+            data_list.append(np.array(np.stack(tuple(box), axis=0)).astype('float32'))
             del box,red_channel,green_channel,blue_channel,tem_comb_image
         # data_array=np.asarray(data_list,dtype=object)
         # np.save('/Users/haoranyue/Desktop/mm_1.npy', data_list)
