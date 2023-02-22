@@ -11,7 +11,7 @@ from omero_screen.general_functions import save_fig, generate_image, filter_segm
 import skimage
 from cellpose import models
 from skimage import measure, io
-
+from CNN_pytorch.galleries import gallery_data
 from CNN_pytorch.load_model import *
 from PIL import Image as Img
 
@@ -36,12 +36,12 @@ class Image:
         self.cyto_mask = self._get_cyto()
         self.data=self._get_data(width=20)
         # self.data.to_csv('/Users/haoranyue/Desktop/mm.csv')
-        self.data_inter_M=self._analysis()
+        self.data_inter_M=self._mitotic_analysis()
 
     def _get_data(self, width=20):
         empty_channel = np.zeros((self.img_dict['DAPI'].shape[0], self.img_dict['DAPI'].shape[1]))
         comb_image = np.dstack([empty_channel, self.img_dict['Tub'], self.img_dict['DAPI']]).astype('float32')
-        comb_image=(comb_image - comb_image.mean()) / comb_image.std()
+        comb_image=(comb_image - comb_image.min()) / comb_image.max()-comb_image.min()
         data_list =[]
         df_props = pd.DataFrame(measure.regionprops_table(self.c_mask, properties=('label', 'centroid',)))
         for label in (df_props['label'].tolist()):
@@ -61,6 +61,8 @@ class Image:
             blue_channel=((red_channel!=0) * comb_image[:, :, 2]).copy()
             tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
             box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
+            # plt.imshow(box)
+            # plt.show()
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype(object))
             del box,red_channel,green_channel,blue_channel,tem_comb_image
         # data_array=np.asarray(data_list,dtype=object)
@@ -278,7 +280,7 @@ if __name__ == "__main__":
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
         image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
-        image.data_inter_M.to_csv('/Users/haoranyue/Desktop/venv/mm_1.csv')
+        gallery_data(image.data_inter_M, ['cell_data','inter_M'], 'inter', 25, images_per_row=5)
         image_data = ImageProperties(well, image, meta_data, exp_paths)
         image.segmentation_figure()
         df_final = image_data.image_df
