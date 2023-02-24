@@ -8,12 +8,8 @@ from skimage import exposure
 def gallery_data(df,pras,inter_phase,total,images_per_row):
     tem_df=df[pras]
     tem_cell_list=tem_df[tem_df['inter_M']==inter_phase]['cell_data'].tolist()
-    for i in tem_cell_list:
-        print(i.shape)
-    nor_list=[i for i in tem_cell_list if i.shape==(41,41,3)]
-
+    nor_list=[np.array(i).astype('float32') for i in tem_cell_list if i.shape==(41,41,3)]
     sample = random.sample(nor_list, total)
-    print(sample[0].dtype)
     plt.show()
     plot_digits_2(sample, images_per_row=images_per_row)
 
@@ -29,11 +25,12 @@ def plot_digits_2(sample, images_per_row=5, **options):
     images = []
     for image in sample:
         percentiles = np.percentile(image, (1, 100))
+        # print(type(percentiles), percentiles)
         scaled=exposure.rescale_intensity(image, in_range=tuple(percentiles))
-        # plt.imshow(scaled)
-        # plt.show()
-        scaled[:,:,0]=np.zeros((41, 41))
-        images.append(scaled)
+        plt.imshow(scaled)
+        plt.show()
+        image[:,:,0]=np.zeros((41, 41))
+        images.append(image)
     # Add empty images to the batch to complete the last row
     images.append(np.zeros((height, width * n_empty)))
     # Concatenate the images in each row

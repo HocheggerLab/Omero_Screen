@@ -14,7 +14,7 @@ from skimage import measure, io
 from CNN_pytorch.galleries import gallery_data
 from CNN_pytorch.load_model import *
 from PIL import Image as Img
-
+import tqdm
 import cv2
 
 class Image:
@@ -47,7 +47,6 @@ class Image:
         for label in (df_props['label'].tolist()):
             # centroid = region.centroid
             i = df_props.loc[df_props['label'] == label, 'centroid-0'].item()
-
             j = df_props.loc[df_props['label'] == label, 'centroid-1'].item()
 
             imin = int(round(max(0, i - width)))
@@ -56,13 +55,11 @@ class Image:
             jmax = int(round(min(self.c_mask.shape[1], j + width + 1)))
             comb_image[:, :, 0] = self.c_mask
             red_channel= (comb_image[:, :, 0] == label) * np.ones(
-                (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1])).copy()
+                (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1])).copy()*0.01
             green_channel=((red_channel!=0) * comb_image[:, :, 1]).copy()
             blue_channel=((red_channel!=0) * comb_image[:, :, 2]).copy()
             tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
             box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
-            # plt.imshow(box)
-            # plt.show()
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype('float32'))
             del box,red_channel,green_channel,blue_channel,tem_comb_image
         # data_array=np.asarray(data_list,dtype=object)
@@ -84,7 +81,7 @@ class Image:
         img_transform = data_transform()
         # Convert the list of PIL images to PyTorch tensors
 
-        tensor_list = [img_transform(np.array(image).astype(np.uint8)) for image in image_list]
+        tensor_list = [img_transform(image=np.array(img))['image'] for img in image_list]
         # Stack the tensors into a single batch
         batch = torch.stack(tensor_list).to(torch.device('mps'))
         # Pass the batch through the model
@@ -274,18 +271,25 @@ if __name__ == "__main__":
     def feature_extraction_test(conn=None):
         meta_data = MetaData(928, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 9674)
-        print(well.getImage(0))
-        omero_image = well.getImage(0)
+        well = conn.getObject("Well", 9662)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
-        print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
-        image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
-        gallery_data(image.data_inter_M, ['cell_data','inter_M'], 'inter', 25, images_per_row=5)
-        image_data = ImageProperties(well, image, meta_data, exp_paths)
-        image.segmentation_figure()
-        df_final = image_data.image_df
-        df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
-        print(df_final)
+        image_number = len(list(well.listChildren()))
+        for number in tqdm.tqdm(range(image_number)):
+            omero_img = well.getImage(number)
+            image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
+            gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
+        # print(well.getImage(0))
+        # omero_image = well.getImage(0)
+        # flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
+        # print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
+        # image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
+        # image.data_inter_M
+        # gallery_data(image.data_inter_M, ['cell_data','inter_M'], 'M', 25, images_per_row=5)
+        # image_data = ImageProperties(well, image, meta_data, exp_paths)
+        # image.segmentation_figure()
+        # df_final = image_data.image_df
+        # df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
+        # print(df_final)
 
 
 
