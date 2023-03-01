@@ -68,29 +68,11 @@ def main(plate_id, conn=None):
 
     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
     df_final.to_csv(exp_paths.final_data / f"{meta_data.plate}_final_data.csv")
-    # df_original = pd.read_csv(
-    #     '/Users/haoranyue/Downloads/221011_Cellcycleprofile_Exp3_siRNAs_MM231_RPE1_U2OS_singlecell_cellcycle.csv')
-    # df_merge = merge_data(df_final, df_original)
-    #
-    # df_check = df_merge[df_merge['cell_cycle'] == "G2/M"]
-    # df_check_M = df_check[df_check['cell_cycle_detailed'] == "M"]
-    # nor_list = [np.array(i).astype('float32') for i in df_check_M['cell_data'].tolist() if i.shape == (41, 41, 3)]
-    # print(len(nor_list),'len norlist')
-    # for index, i in enumerate(nor_list):
-    #     print(i[:,:,0].max(),index)
-    # import cv2
-    # for index,i in enumerate(nor_list):
-    #     print(index,'cv2')
-    #     print(i[:, :, 0].max(), index)
-        # cv2.imwrite(f'/Users/haoranyue/Desktop/data/{index}.tif', i)
-    # gallery_data(df_check_M, ['cell_data', 'cell_cycle_detailed'], 'M',300, images_per_row=15)
-    # screen = TrainingScreen(nor_list)
-    # gallery_data(df_check_M, ['cell_data', 'inter_M'], 'inter',400, images_per_row=20)
-    # gallery_data(df_check_M, ['cell_data', 'inter_M'], 'inter', 2, images_per_row=2)
-    # if 'H3P' in meta_data.channels.keys():
-    #     cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
-    # else:
-    #     cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+
+    if 'H3P' in meta_data.channels.keys():
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
+    else:
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
 
 
 if __name__ == '__main__':
