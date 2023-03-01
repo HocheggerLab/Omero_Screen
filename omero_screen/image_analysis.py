@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
+from tensorflow_model.tf_model import tensorflow_model
 from omero_screen import Defaults
 from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
@@ -58,8 +58,10 @@ class Image:
                 (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1])).copy()*0.01
             green_channel=((red_channel!=0) * comb_image[:, :, 1]).copy()
             blue_channel=((red_channel!=0) * comb_image[:, :, 2]).copy()
+
             tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
             box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
+            print(box[:,:,0].max())
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype('float32'))
             del box,red_channel,green_channel,blue_channel,tem_comb_image
         # data_array=np.asarray(data_list,dtype=object)
@@ -70,27 +72,41 @@ class Image:
 
     def _mitotic_analysis(self):
         images_list=self.data['cell_data'].tolist()
-        probs = self.predict_images(image_list=images_list)
+        # probs = self.predict_images(image_list=images_list)
+        probs = self.predict_tf(image_list=images_list)
         self.data['inter_M']=pd.Series(probs)
         replace_dict = {0: 'inter', 1: 'M'}
         self.data['inter_M']=self.data['inter_M'].replace(replace_dict)
         return self.data
 
-    def predict_images(self,image_list):
-        model = trained_model()
-        img_transform = data_transform()
-        # Convert the list of PIL images to PyTorch tensors
+    # def predict_images(self,image_list):
+    #     model = trained_model()
+    #     img_transform = data_transform()
+    #     # Convert the list of PIL images to PyTorch tensors
+    #
+    #     tensor_list = [img_transform(image=np.array(img))['image'] for img in image_list]
+    #     # Stack the tensors into a single batch
+    #     batch = torch.stack(tensor_list).to(torch.device('mps'))
+    #     # Pass the batch through the model
+    #     with torch.no_grad():
+    #         outputs = model(batch).to(torch.device('mps'))
+    #     # Get the predicted class probabilities
+    #     probs = torch.nn.functional.softmax(outputs, dim=1)
+    #     _,pre=probs.max(1)
+    #     return pre.tolist()
 
-        tensor_list = [img_transform(image=np.array(img))['image'] for img in image_list]
-        # Stack the tensors into a single batch
-        batch = torch.stack(tensor_list).to(torch.device('mps'))
-        # Pass the batch through the model
-        with torch.no_grad():
-            outputs = model(batch).to(torch.device('mps'))
-        # Get the predicted class probabilities
-        probs = torch.nn.functional.softmax(outputs, dim=1)
-        _,pre=probs.max(1)
-        return pre.tolist()
+    def predict_tf(self,image_list):
+        model=tensorflow_model()
+        y_proba = model.predict(image_list)
+
+        y_pred = np.round(y_proba).astype('int')
+
+        return y_pred
+
+
+
+
+
 
 
 
@@ -271,13 +287,13 @@ if __name__ == "__main__":
     def feature_extraction_test(conn=None):
         meta_data = MetaData(928, conn)
         exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 9662)
+        well = conn.getObject("Well", 9684)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         image_number = len(list(well.listChildren()))
         for number in tqdm.tqdm(range(image_number)):
             omero_img = well.getImage(number)
             image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
-            gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
+            # gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
         # print(well.getImage(0))
         # omero_image = well.getImage(0)
         # flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)

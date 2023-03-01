@@ -228,6 +228,4 @@ secrets
 
 
 /CNN_pytorch/CNN_checkpoint.pth.tar
-/CNN_pytorch/generate_data.py
-/CNN_pytorch/training_gui.py
 /CNN_pytorch/data/

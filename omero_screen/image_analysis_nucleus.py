@@ -13,7 +13,7 @@ import logging
 import matplotlib.pyplot as plt
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
-logging.getLogger('tensorflow').setLevel(logging.FATAL)
+logging.getLogger('tensorflow_model').setLevel(logging.FATAL)
 
 class NucImage:
     """

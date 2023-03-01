@@ -239,10 +239,10 @@ dependencies:
   - tensorboard=2.8.0=pyhd8ed1ab_1
   - tensorboard-data-server=0.6.0=py310h4fe9c50_3
   - tensorboard-plugin-wit=1.8.1=pyhd8ed1ab_0
-  - tensorflow=2.8.0=cpu_py310h6ecea76_0
-  - tensorflow-base=2.8.0=cpu_py310h7f11b9b_0
-  - tensorflow-deps=2.10.0=0
-  - tensorflow-estimator=2.8.0=cpu_py310hb683137_0
+  - tensorflow_model=2.8.0=cpu_py310h6ecea76_0
+  - tensorflow_model-base=2.8.0=cpu_py310h7f11b9b_0
+  - tensorflow_model-deps=2.10.0=0
+  - tensorflow_model-estimator=2.8.0=cpu_py310hb683137_0
   - termcolor=2.1.0=pyhd8ed1ab_0
   - terminado=0.17.0=pyhd1c38e8_0
   - tifffile=2022.10.10=pyhd8ed1ab_0

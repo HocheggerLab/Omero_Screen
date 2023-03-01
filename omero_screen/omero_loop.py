@@ -30,10 +30,12 @@ def well_loop(well, meta_data, exp_paths, flatfield_dict, stardist_model):
             omero_img = well.getImage(number)
             if 'Tub' in meta_data.channels.keys():
                 image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
-                gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
+
+                # gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
                 image_data = ImageProperties(well, image, meta_data, exp_paths)
             else:
                 image = NucImage(well, omero_img, meta_data, exp_paths, flatfield_dict, stardist_model)
+                print('l am here')
                 image_data = NucImageProperties(well, image, meta_data, exp_paths)
             if number == 1:
                 image.segmentation_figure()
