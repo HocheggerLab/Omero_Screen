@@ -16,7 +16,7 @@ from CNN_pytorch.load_model import *
 from PIL import Image as Img
 import tqdm
 import cv2
-
+import tensorflow as tf
 class Image:
     """
     generates the corrected images and segmentation masks.
@@ -35,7 +35,6 @@ class Image:
         self.c_mask = self._c_segmentation()
         self.cyto_mask = self._get_cyto()
         self.data=self._get_data(width=20)
-        # self.data.to_csv('/Users/haoranyue/Desktop/mm.csv')
         self.data_inter_M=self._mitotic_analysis()
 
     def _get_data(self, width=20):
@@ -48,7 +47,6 @@ class Image:
             # centroid = region.centroid
             i = df_props.loc[df_props['label'] == label, 'centroid-0'].item()
             j = df_props.loc[df_props['label'] == label, 'centroid-1'].item()
-
             imin = int(round(max(0, i - width)))
             imax = int(round(min(self.c_mask.shape[0], i + width + 1)))
             jmin = int(round(max(0, j - width)))
@@ -61,11 +59,8 @@ class Image:
 
             tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
             box = np.array(tem_comb_image[imin:imax, jmin:jmax].copy())
-            print(box[:,:,0].max())
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype('float32'))
             del box,red_channel,green_channel,blue_channel,tem_comb_image
-        # data_array=np.asarray(data_list,dtype=object)
-        # np.save('/Users/haoranyue/Desktop/mm_1.npy', data_list)
         df_props['cell_data']=pd.Series(data_list)
 
         return df_props
@@ -79,35 +74,17 @@ class Image:
         self.data['inter_M']=self.data['inter_M'].replace(replace_dict)
         return self.data
 
-    # def predict_images(self,image_list):
-    #     model = trained_model()
-    #     img_transform = data_transform()
-    #     # Convert the list of PIL images to PyTorch tensors
-    #
-    #     tensor_list = [img_transform(image=np.array(img))['image'] for img in image_list]
-    #     # Stack the tensors into a single batch
-    #     batch = torch.stack(tensor_list).to(torch.device('mps'))
-    #     # Pass the batch through the model
-    #     with torch.no_grad():
-    #         outputs = model(batch).to(torch.device('mps'))
-    #     # Get the predicted class probabilities
-    #     probs = torch.nn.functional.softmax(outputs, dim=1)
-    #     _,pre=probs.max(1)
-    #     return pre.tolist()
+
+    def resize_tf(self,image):
+        return tf.image.resize(image, size=(32, 32), method=tf.image.ResizeMethod.BILINEAR)
 
     def predict_tf(self,image_list):
+        X=np.array([self.resize_tf(i) for i in image_list])
         model=tensorflow_model()
-        y_proba = model.predict(image_list)
-
+        y_proba = model.predict(X)
         y_pred = np.round(y_proba).astype('int')
-
-        return y_pred
-
-
-
-
-
-
+        flat_list = [item for sublist in y_pred for item in sublist]
+        return flat_list
 
 
     def _get_metadata(self):
@@ -290,16 +267,16 @@ if __name__ == "__main__":
         well = conn.getObject("Well", 9684)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         image_number = len(list(well.listChildren()))
-        for number in tqdm.tqdm(range(image_number)):
-            omero_img = well.getImage(number)
-            image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
+        # for number in tqdm.tqdm(range(image_number)):
+        #     omero_img = well.getImage(number)
+        image = Image(well, well.getImage(0), meta_data, exp_paths, flatfield_dict)
             # gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
         # print(well.getImage(0))
         # omero_image = well.getImage(0)
         # flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         # print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
         # image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
-        # image.data_inter_M
+        print(image.data_inter_M)
         # gallery_data(image.data_inter_M, ['cell_data','inter_M'], 'M', 25, images_per_row=5)
         # image_data = ImageProperties(well, image, meta_data, exp_paths)
         # image.segmentation_figure()

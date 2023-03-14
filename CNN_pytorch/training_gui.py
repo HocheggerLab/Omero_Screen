@@ -101,7 +101,7 @@ class TrainingScreen:
             resize_image = image.resize((450, 450))
             self.photo = ImageTk.PhotoImage(resize_image)
         else:
-            np.save(f'../CNN_pytorch/data/U2OS_3_4.npy',self.dict_all)
+            np.save(f'../CNN_pytorch/data/mislablled_true_M_plate_1_2.npy',self.dict_all)
 
     def classify_mitosis(self):
         # if count < len(self.nuclei.nuclei_list):

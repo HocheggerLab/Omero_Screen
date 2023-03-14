@@ -22,9 +22,25 @@ def cellcycle_analysis(df, path, plate, H3=True):
         cc_data, data_thresholds = generate_cellcycle_stats_EdU(df, data_path, plate)
         generate_plots(figure_path, cc_data, data_thresholds)
 
+    def update_G2_M_CNN(row):
+        if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
+            return 'G2'
+        elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
+            return 'M'
+        else:
+            return row['cell_cycle_detailed']
+
+
+
+    cc_data['cell_cycle_detailed_CNN']=cc_data.apply(update_G2_M_CNN,axis=1)
+    cc_data.loc[cc_data['cell_cycle']!="G2/M",'inter_M']='inter'
+    cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
+    cellcycle_stats(cc_data, data_path, plate, 'inter_M')
+    cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed_CNN')
 
+    return cc_data
 
 def cellcycle_stats(df, path, plate, col_name):
     df_percentage = (df.groupby(['well', 'cell_line', 'condition', col_name])['experiment'].count() /
@@ -43,14 +59,21 @@ def generate_cellcycle_stats(df, data_path, plate):
                           # !!! Include cytoplasmic EdU and H3P intensities
 
                           "intensity_mean_EdU_cyto",
-                          "intensity_mean_H3P_cyto"]).agg(
+                          "intensity_mean_H3P_cyto", 'inter_M',]).agg(
 
         nuclei_count=("label", "count"),
         area_nucleus=("area_nucleus", "sum"),
         DAPI_total=("integrated_int_DAPI", "sum"),
         EdU_mean=("intensity_mean_EdU_nucleus", "mean"),
         H3P_mean=("intensity_mean_H3P_nucleus", "mean")).reset_index()
-
+    merged_df = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id",
+                          "cell_line", "condition", "Cyto_ID", "area_cell",
+                          "intensity_mean_EdU_cyto",
+                          "intensity_mean_H3P_cyto", 'inter_M','cell_data']], on=["experiment", "plate_id", "well", "well_id", "image_id",
+                          "cell_line", "condition", "Cyto_ID", "area_cell",
+                          "intensity_mean_EdU_cyto",
+                          "intensity_mean_H3P_cyto", 'inter_M'])
+    data_IF=merged_df.copy()
     # !!! Correct nuclear EdU and H3P intensities using respective cytoplasmic intensities
 
     data_IF["EdU_mean_corr"] = data_IF["EdU_mean"] / data_IF["intensity_mean_EdU_cyto"]
@@ -77,7 +100,7 @@ def generate_cellcycle_stats(df, data_path, plate):
 def generate_cellcycle_stats_EdU(df, data_path, plate):
     df.condition = df.condition.str.replace('/', '+')  # / makes problem when saving files later
     data_IF = df.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
-                          "cell_line", "condition", "Cyto_ID", "area_cell",
+                          "cell_line", "condition", "Cyto_ID", "area_cell", 'inter_M'
 
                           # !!! Include cytoplasmic EdU and H3P intensities
 

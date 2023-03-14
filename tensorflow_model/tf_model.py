@@ -23,7 +23,7 @@ def tensorflow_model():
     # define model as Sequential
     model = Sequential()
     # first convolutional layer with 32 filters
-    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=[41, 41, 3]))
+    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=[32, 32, 3]))
     # reduce dimensionality through max pooling
     model.add(MaxPooling2D(pool_size=(2, 2)))
     # add a second 2D convolutional layer with 64 filters
@@ -32,9 +32,12 @@ def tensorflow_model():
     model.add(Dropout(0.25))
     # add a thirs 2D convolutional layer with 128 filters
     model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
-    model.add(Flatten())
+    # add dropout to prevent over fitting
+    model.add(Dropout(0.25))
+    # model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
+    # model.add(Flatten())
     # fully connected layer
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(256, activation='relu'))
     # add additional dropout to prevent overfitting
     model.add(Dropout(0.5))
     # prediction layers
@@ -51,7 +54,7 @@ def tensorflow_model():
         # set the metric as accuracy
         metrics=['accuracy']
     )
-    model = keras.models.load_model(os.path.join( '../tensorflow_model/MI_CNN_model_0301.h5'))
+    model = keras.models.load_model(os.path.join( '../tensorflow_h5/MI_CNN_model_0309_2.h5'))
 
     return model
 
