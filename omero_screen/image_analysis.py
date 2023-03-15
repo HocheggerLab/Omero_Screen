@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from tensorflow_model.tf_model import tensorflow_model
-from omero_screen import Defaults
 from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
@@ -12,6 +11,8 @@ import skimage
 from cellpose import models
 from skimage import measure, io
 import cv2
+import os
+
 import tensorflow as tf
 class Image:
     """
@@ -113,7 +114,7 @@ class Image:
 
     def _n_segmentation(self):
         """perform cellpose segmentation using nuclear mask """
-        model = models.CellposeModel(gpu=True, model_type='/Users/haoranyue/PycharmProjects/Omero_Screen_2/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
+        model = models.CellposeModel(gpu=True, model_type=os.path.dirname(os.getcwd())+'/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
 
         n_channels = [[0, 0]]
         n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
@@ -122,7 +123,7 @@ class Image:
 
     def _c_segmentation(self):
         """perform cellpose segmentation using cell mask """
-        model = models.CellposeModel(gpu=True, model_type='/Users/haoranyue/PycharmProjects/Omero_Screen_2/data/CellPose_models/'+self._get_models())
+        model = models.CellposeModel(gpu=True, model_type=os.path.dirname(os.getcwd())+'/data/CellPose_models/'+self._get_models())
         c_channels = [[2, 1]]
         # combine the 2 channel numpy array for cell segmentation with the nuclei channel
         comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
@@ -256,23 +257,24 @@ class ImageProperties:
 
 if __name__ == "__main__":
     # print(Defaults.MODEL_DICT['nuclei'])
-    @omero_connect
-    def feature_extraction_test(conn=None):
-        meta_data = MetaData(928, conn)
-        exp_paths = ExpPaths(meta_data)
-        well = conn.getObject("Well", 9684)
-        flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
-        image_number = len(list(well.listChildren()))
+    print(Defaults)
+    # @omero_connect
+    # def feature_extraction_test(conn=None):
+    #     meta_data = MetaData(928, conn)
+    #     exp_paths = ExpPaths(meta_data)
+    #     well = conn.getObject("Well", 9684)
+    #     flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
+    #     image_number = len(list(well.listChildren()))
         # for number in tqdm.tqdm(range(image_number)):
         #     omero_img = well.getImage(number)
-        image = Image(well, well.getImage(0), meta_data, exp_paths, flatfield_dict)
+        # image = Image(well, well.getImage(0), meta_data, exp_paths, flatfield_dict)
             # gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
         # print(well.getImage(0))
         # omero_image = well.getImage(0)
         # flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
         # print(Image(well, omero_image, meta_data, exp_paths, flatfield_dict))
         # image = Image(well, omero_image, meta_data, exp_paths, flatfield_dict)
-        print(image.data_inter_M)
+        # print(image.data_inter_M)
         # gallery_data(image.data_inter_M, ['cell_data','inter_M'], 'M', 25, images_per_row=5)
         # image_data = ImageProperties(well, image, meta_data, exp_paths)
         # image.segmentation_figure()
@@ -283,4 +285,4 @@ if __name__ == "__main__":
 
 
 
-    feature_extraction_test()
+    # feature_extraction_test()

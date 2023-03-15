@@ -11,9 +11,9 @@ from skimage import exposure
 def resize_tf( image):
     return tf.image.resize(image, size=(41, 41,), method=tf.image.ResizeMethod.BILINEAR)
 
-def gallery_data(df,check_phase,total,images_per_row):
-    tem_df = df[['cell_data','cell_cycle_detailed']]
-    tem_cell_list=tem_df[tem_df['cell_cycle_detailed']==check_phase]['cell_data'].tolist()
+def gallery_data(df,cell_cycle_detaild,check_phase,total,images_per_row):
+
+    tem_cell_list=df[df[cell_cycle_detaild]==check_phase]['cell_data'].tolist()
     # convert the TensorFlow Tensor object to a NumPy array
     nor_list = [resize_tf(i).numpy().astype('float32') for i in tem_cell_list]
     # select the samples
