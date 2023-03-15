@@ -38,7 +38,7 @@ def main(plate_id, conn=None):
     else:
         cc_data=cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
     # %% generate the gallery to check
-    gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed_CNN',check_phase='M', total=4000,images_per_row=80)
+    gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='H3_determined',total=5300,images_per_row=100)
 
 if __name__ == '__main__':
     # main(928)

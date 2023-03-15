@@ -11,17 +11,18 @@ from skimage import exposure
 def resize_tf( image):
     return tf.image.resize(image, size=(41, 41,), method=tf.image.ResizeMethod.BILINEAR)
 
-def gallery_data(df,cell_cycle_detaild,check_phase,total,images_per_row):
+def gallery_data(df,cell_cycle_detaild,check_phase,gallery_name,total,images_per_row):
 
     tem_cell_list=df[df[cell_cycle_detaild]==check_phase]['cell_data'].tolist()
     # convert the TensorFlow Tensor object to a NumPy array
     nor_list = [resize_tf(i).numpy().astype('float32') for i in tem_cell_list]
+    print(len(nor_list))
     # select the samples
     sample = random.sample(nor_list,total)
     print(f'{check_phase} Total number: {len(nor_list)}, Random select: {len(sample)}')
-    plot_digits(sample, images_per_row=images_per_row,phase=check_phase)
+    plot_digits(sample, images_per_row=images_per_row,phase=check_phase,plot_name=gallery_name)
 
-def plot_digits(sample, images_per_row,phase):
+def plot_digits(sample, images_per_row,phase,plot_name):
     # Get the shape of the individual images
     img_shape = sample[0].shape
     height, width = img_shape[:2]
@@ -48,10 +49,10 @@ def plot_digits(sample, images_per_row,phase):
     image = np.concatenate(row_images, axis=0)
     # # Display the final image
     # Create a PDF file and add images to it
-    with PdfPages(f'Gallery_{phase}.pdf') as pdf:
+    with PdfPages(f'{plot_name}_Gallery_{phase}.pdf') as pdf:
         fig, axs = plt.subplots(1, 1)
         axs.imshow(image, cmap='gray')
-        axs.set_title(f'{phase} Gallery')
-        fig.suptitle(f'{phase} sample')
+        axs.set_title(f'{plot_name} {phase} Gallery')
+        fig.suptitle(f'{plot_name} {phase} sample')
         pdf.savefig(fig)
         # plt.close()
