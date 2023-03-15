@@ -229,3 +229,6 @@ secrets
 
 /CNN_pytorch/CNN_checkpoint.pth.tar
 /CNN_pytorch/data/
+/data/
+/tensorflow_h5/MI_CNN_model_0309.h5
+/tensorflow_h5/MI_CNN_model_0310.h5

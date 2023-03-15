@@ -43,7 +43,7 @@ def tensorflow_model():
     # prediction layers
     model.add(Dense(1, activation='sigmoid', name='preds'))
     # show model summary
-    model.summary()
+    # model.summary()
 
     # Compile the model
     model.compile(

@@ -4,7 +4,6 @@ from omero_screen.image_analysis_nucleus import NucImage, NucImageProperties
 import tqdm
 import pandas as pd
 import pathlib
-from CNN_pytorch.galleries import gallery_data
 
 
 # Functions to loop through well object, assemble data for images and ave quality control data
@@ -30,8 +29,6 @@ def well_loop(well, meta_data, exp_paths, flatfield_dict, stardist_model):
             omero_img = well.getImage(number)
             if 'Tub' in meta_data.channels.keys():
                 image = Image(well, omero_img, meta_data, exp_paths, flatfield_dict)
-
-                # gallery_data(image.data_inter_M, ['cell_data', 'inter_M'], 'M', 25, images_per_row=5)
                 image_data = ImageProperties(well, image, meta_data, exp_paths)
             else:
                 image = NucImage(well, omero_img, meta_data, exp_paths, flatfield_dict, stardist_model)

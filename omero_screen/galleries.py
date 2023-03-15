@@ -18,7 +18,7 @@ def gallery_data(df,check_phase,total,images_per_row):
     nor_list = [resize_tf(i).numpy().astype('float32') for i in tem_cell_list]
     # select the samples
     sample = random.sample(nor_list,total)
-    print(f'{check_phase} total number: {len(nor_list)}, random select: {len(sample)}')
+    print(f'{check_phase} Total number: {len(nor_list)}, Random select: {len(sample)}')
     plot_digits(sample, images_per_row=images_per_row,phase=check_phase)
 
 def plot_digits(sample, images_per_row,phase):

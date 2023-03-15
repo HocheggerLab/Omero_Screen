@@ -11,10 +11,6 @@ from omero_screen.general_functions import save_fig, generate_image, filter_segm
 import skimage
 from cellpose import models
 from skimage import measure, io
-from CNN_pytorch.galleries import gallery_data
-from CNN_pytorch.load_model import *
-from PIL import Image as Img
-import tqdm
 import cv2
 import tensorflow as tf
 class Image:
