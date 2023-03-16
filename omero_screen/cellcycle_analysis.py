@@ -14,14 +14,6 @@ def cellcycle_analysis(df, path, plate, H3=True):
     data_path.mkdir(exist_ok=True)
     figure_path.mkdir(exist_ok=True)
 
-    if H3:
-        cc_data, data_thresholds = generate_cellcycle_stats(df, data_path, plate)
-        generate_plots(figure_path, cc_data, data_thresholds)
-        H3_plots(figure_path, cc_data, data_thresholds)
-    else:
-        cc_data, data_thresholds = generate_cellcycle_stats_EdU(df, data_path, plate)
-        generate_plots(figure_path, cc_data, data_thresholds)
-
     def update_G2_M_CNN(row):
         if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
             return 'G2'
@@ -30,16 +22,21 @@ def cellcycle_analysis(df, path, plate, H3=True):
         else:
             return row['cell_cycle_detailed']
 
+    if H3:
+        cc_data, data_thresholds = generate_cellcycle_stats(df, data_path, plate)
+        generate_plots(figure_path, cc_data, data_thresholds)
+        H3_plots(figure_path, cc_data, data_thresholds)
+    else:
+        cc_data, data_thresholds = generate_cellcycle_stats_EdU(df, data_path, plate)
+        generate_plots(figure_path, cc_data, data_thresholds)
+        # split the phase of  G2/M using the CNN
+        cc_data['cell_cycle_detailed'] = cc_data.apply(update_G2_M_CNN, axis=1)
+        # ensure the CNN model result only work with G2/M phase
+        cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
 
-
-    cc_data['cell_cycle_detailed_CNN']=cc_data.apply(update_G2_M_CNN,axis=1)
-    # ensure the CNN model result only work with G2/M phase
-    cc_data.loc[cc_data['cell_cycle']!="G2/M",'inter_M']='inter'
 
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
-    cellcycle_stats(cc_data, data_path, plate, 'inter_M')
-    cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed_CNN')
 
     return cc_data
 
@@ -112,8 +109,8 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
     ## intergrat the cell_date into the data_IF
     df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", "Cyto_ID", "area_cell",
-         "intensity_mean_EdU_cyto", "intensity_mean_H3P_cyto", 'inter_M', 'cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
-                                      "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto","intensity_mean_H3P_cyto", 'inter_M'])
+         "intensity_mean_EdU_cyto",'inter_M', 'cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
+                                      "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto", 'inter_M'])
 
     data_IF = df_merge_cell_data.copy()
 

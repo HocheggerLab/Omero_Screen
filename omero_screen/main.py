@@ -13,12 +13,23 @@ from omero_screen.galleries import gallery_data
 
 @omero_connect
 def main(plate_id, conn=None):
+    """
+    Analyze a plate of well data and output the results.
+
+    :param plate_id: The ID of the plate to analyze
+    :param conn: Omero connection to login in.
+
+    :return:
+       None
+    """
     stardist_model = StarDist2D.from_pretrained('2D_versatile_fluo')
     meta_data = MetaData(plate_id, conn)
     exp_paths = ExpPaths(meta_data)
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):
+        if count in range(4,49):
+            continue
         ann = well.getAnnotation(Defaults.NS)
         try:
             cell_line = dict(ann.getValue())['cell_line']
@@ -34,14 +45,27 @@ def main(plate_id, conn=None):
     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
     df_final.to_csv(exp_paths.final_data / f"{meta_data.plate}_final_data.csv")
     if 'H3P' in meta_data.channels.keys():
-        cc_data=cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
+        # Ask for user input
+        user_input = input("Do you want to perform H3P analysis? (yes/no): ")
+        # Check user input and perform the appropriate analysis
+        if user_input.lower() == 'no':
+        # Call the CNN_classification function
+            cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+        elif user_input.lower() == 'yes':
+        # Call the H3P_analysis function
+            cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
+        else:
+            print("Invalid input. Please enter 'yes' or 'no'.")
+            cc_data = None
     else:
-        cc_data=cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
-    # %% generate the gallery to check
-    gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='H3_determined',total=5300,images_per_row=100)
+        cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+
+    if cc_data is not None:
+        gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='CNN_determined',total=25,images_per_row=5)
 
 if __name__ == '__main__':
-    # main(928)
-    main(1054)
+    main(928)
+    # main(1054)
+    # main(1125)
     # main(1056)
 
