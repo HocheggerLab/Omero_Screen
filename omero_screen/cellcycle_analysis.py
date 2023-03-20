@@ -34,9 +34,15 @@ def cellcycle_analysis(df, path, plate, H3=True):
         # ensure the CNN model result only work with G2/M phase
         cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
 
-    print('hello')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
+
+    # Save the cell cycle data to a pickle file
+    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
+             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
+    # Drop the 'cell_data' column from cc_data
+    cc_data = cc_data.drop('cell_data', axis=1)
+    cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle_detailed.csv")
 
 
 def cellcycle_stats(df, path, plate, col_name):
@@ -89,11 +95,6 @@ def generate_cellcycle_stats(df, data_path, plate):
                                              EdU_col="EdU_mean_corr_norm",
                                              H3P_col="H3P_mean_corr_norm")
 
-    # Save the cell cycle data to a pickle file
-    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
-             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_imagedata")
-    # Drop the 'cell_data' column from cc_data
-    cc_data = cc_data.drop('cell_data', axis=1)
     # Save the cell cycle data to a CSV file
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
@@ -134,11 +135,7 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
     cc_data, data_thresholds = fun_CellCycle_EdU(data=norm_data_IF, DAPI_col="DAPI_total_norm",
                                                  EdU_col="EdU_mean_corr_norm")
-    # Save the cell cycle data to a pickle file
-    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'cell_data','cell_cycle_detailed','cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_imagedata")
-    # Drop the 'cell_data' column from cc_data
-    cc_data = cc_data.drop('cell_data', axis=1)
-    # Save the cell cycle data to a CSV file
+    # # Save the cell cycle data to a CSV file
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
