@@ -34,11 +34,10 @@ def cellcycle_analysis(df, path, plate, H3=True):
         # ensure the CNN model result only work with G2/M phase
         cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
 
-
+    print('hello')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
 
-    return cc_data
 
 def cellcycle_stats(df, path, plate, col_name):
     df_percentage = (df.groupby(['well', 'cell_line', 'condition', col_name])['experiment'].count() /
@@ -57,22 +56,21 @@ def generate_cellcycle_stats(df, data_path, plate):
                           # !!! Include cytoplasmic EdU and H3P intensities
 
                           "intensity_mean_EdU_cyto",
-                          "intensity_mean_H3P_cyto", 'inter_M',]).agg(
-
+                          "intensity_mean_H3P_cyto", 'inter_M']).agg(
         nuclei_count=("label", "count"),
         area_nucleus=("area_nucleus", "sum"),
         DAPI_total=("integrated_int_DAPI", "sum"),
         EdU_mean=("intensity_mean_EdU_nucleus", "mean"),
         H3P_mean=("intensity_mean_H3P_nucleus", "mean")).reset_index()
 
-    ## intergrat the cell_date into the data_IF
+    # Merge cell data into the aggregate statistics
     df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id","cell_line", "condition", "Cyto_ID", "area_cell",
                           "intensity_mean_EdU_cyto","intensity_mean_H3P_cyto", 'inter_M','cell_data']], on=["experiment", "plate_id", "well", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell","intensity_mean_EdU_cyto", "intensity_mean_H3P_cyto", 'inter_M'])
 
+    # Use the merged data for further processing
     data_IF=df_merge_cell_data.copy()
     # !!! Correct nuclear EdU and H3P intensities using respective cytoplasmic intensities
-
     data_IF["EdU_mean_corr"] = data_IF["EdU_mean"] / data_IF["intensity_mean_EdU_cyto"]
     data_IF["H3P_mean_corr"] = data_IF["H3P_mean"] / data_IF["intensity_mean_H3P_cyto"]
     data_IF["condition"] = data_IF["condition"].astype(str)
@@ -90,6 +88,13 @@ def generate_cellcycle_stats(df, data_path, plate):
     cc_data, data_thresholds = fun_CellCycle(data=norm_data_IF, DAPI_col="DAPI_total_norm",
                                              EdU_col="EdU_mean_corr_norm",
                                              H3P_col="H3P_mean_corr_norm")
+
+    # Save the cell cycle data to a pickle file
+    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
+             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_imagedata")
+    # Drop the 'cell_data' column from cc_data
+    cc_data = cc_data.drop('cell_data', axis=1)
+    # Save the cell cycle data to a CSV file
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
@@ -101,7 +106,6 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
                           # !!! Include cytoplasmic EdU and H3P intensities
                           "intensity_mean_EdU_cyto",'inter_M']).agg(
-
         nuclei_count=("label", "count"),
         area_nucleus=("area_nucleus", "sum"),
         DAPI_total=("integrated_int_DAPI", "sum"),
@@ -111,11 +115,10 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
     df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", "Cyto_ID", "area_cell",
          "intensity_mean_EdU_cyto",'inter_M', 'cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
                                       "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto", 'inter_M'])
-
+    # Use the merged data for further processing
     data_IF = df_merge_cell_data.copy()
 
     # !!! Correct nuclear EdU and H3P intensities using respective cytoplasmic intensities
-
     data_IF["EdU_mean_corr"] = data_IF["EdU_mean"] / data_IF["intensity_mean_EdU_cyto"]
     data_IF["condition"] = data_IF["condition"].astype(str)
 
@@ -131,6 +134,11 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
     cc_data, data_thresholds = fun_CellCycle_EdU(data=norm_data_IF, DAPI_col="DAPI_total_norm",
                                                  EdU_col="EdU_mean_corr_norm")
+    # Save the cell cycle data to a pickle file
+    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'cell_data','cell_cycle_detailed','cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_imagedata")
+    # Drop the 'cell_data' column from cc_data
+    cc_data = cc_data.drop('cell_data', axis=1)
+    # Save the cell cycle data to a CSV file
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 

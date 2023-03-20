@@ -44,24 +44,28 @@ def main(plate_id, conn=None):
 
     df_final = pd.concat([df_final.loc[:, 'experiment':], df_final.loc[:, :'experiment']], axis=1).iloc[:, :-1]
     df_final.to_csv(exp_paths.final_data / f"{meta_data.plate}_final_data.csv")
+
     if 'H3P' in meta_data.channels.keys():
         # Ask for user input
         user_input = input("Do you want to perform H3P analysis? (yes/no): ")
         # Check user input and perform the appropriate analysis
         if user_input.lower() == 'no':
         # Call the CNN_classification function
-            cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+            cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
         elif user_input.lower() == 'yes':
         # Call the H3P_analysis function
-            cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
+            cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=True)
         else:
             print("Invalid input. Please enter 'yes' or 'no'.")
-            cc_data = None
     else:
-        cc_data = cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
+        cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
 
-    if cc_data is not None:
-        gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='CNN_determined',total=25,images_per_row=5)
+    # if cc_data is not None:
+    #     gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='CNN_determined',total=25,images_per_row=5)
+
+
+
+
 
 if __name__ == '__main__':
     main(928)
