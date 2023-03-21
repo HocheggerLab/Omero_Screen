@@ -35,17 +35,24 @@ def main():
     # Ask user if they want to select a specific well or all wells
     well_option=input("Do you want to select a specific well? (Yes/No): ")
     well= None
+    cell_line = None
+    condition=None
     if well_option.lower()=='yes':
         well=int(input('Enter the well_id: '))
         cell_line_option = input("Do you want to select a cell_line? (Yes/No): ")
-        cell_line=None
+        # cell_line=None
+        df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
         if cell_line_option.lower()=='yes':
             cell_line=str(input('Enter the cell_line '))
             condition_option=input('Do you want to select a condition? (Yes/No):')
             condition=None
+            df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
             if condition_option.lower()=='yes':
                 condition=input('Enter the condition: ')
-    df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
+                df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
+
+    else:
+        df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
 
     # Ask user a specific cell cycle phase
     phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")

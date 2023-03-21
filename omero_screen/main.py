@@ -28,7 +28,7 @@ def main(plate_id, conn=None):
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):
-        if count in range(6,96):
+        if count in range( 8,96):
             continue
         ann = well.getAnnotation(Defaults.NS)
         try:
@@ -68,8 +68,8 @@ def main(plate_id, conn=None):
 
 
 if __name__ == '__main__':
-    # main(928)
+    main(928)
     # main(1054)
-    main(1125)
+    # main(1125)
     # main(1056)
     # main(1273)

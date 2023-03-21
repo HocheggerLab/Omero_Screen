@@ -54,7 +54,7 @@ def tensorflow_model():
         # set the metric as accuracy
         metrics=['accuracy']
     )
-    model = keras.models.load_model(os.path.join('../tensorflow_h5/MI_CNN_model_0309.h5'))
+    model = keras.models.load_model(os.path.join('../tensorflow_h5/MI_CNN_model_0320.h5'))
 
     return model
 
