@@ -14,13 +14,31 @@ def cellcycle_analysis(df, path, plate, H3=True):
     data_path.mkdir(exist_ok=True)
     figure_path.mkdir(exist_ok=True)
 
-    def update_G2_M_CNN(row):
+    # def update_G2_M_cell_cycle_detailed(row):
+    #     if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
+    #         return 'G2'
+    #     elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
+    #         return 'M'
+    #     else:
+    #         return row['cell_cycle_detailed']
+    #
+    # def update_G2_M_CNN_cell_cycle(row):
+    #     if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
+    #         return 'G2'
+    #     elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
+    #         return 'M'
+    #     else:
+    #         return row['cell_cycle']
+    def update_cell_cycle_CNN(row, detailed=False):
         if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
             return 'G2'
         elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
             return 'M'
         else:
-            return row['cell_cycle_detailed']
+            if detailed:
+                return row['cell_cycle_detailed']
+            else:
+                return row['cell_cycle']
 
     if H3:
         cc_data, data_thresholds = generate_cellcycle_stats(df, data_path, plate)
@@ -30,16 +48,17 @@ def cellcycle_analysis(df, path, plate, H3=True):
         cc_data, data_thresholds = generate_cellcycle_stats_EdU(df, data_path, plate)
         generate_plots(figure_path, cc_data, data_thresholds)
         # split the phase of  G2/M using the CNN
-        cc_data['cell_cycle_detailed'] = cc_data.apply(update_G2_M_CNN, axis=1)
+        cc_data['cell_cycle_detailed'] = cc_data.apply(update_cell_cycle_CNN, axis=1, detailed=True)
+        cc_data['cell_cycle'] = cc_data.apply(update_cell_cycle_CNN, axis=1)
         # ensure the CNN model result only work with G2/M phase
         cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
 
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
 
-    # Save the cell cycle data to a pickle file
-    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
-             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
+    # # Save the cell cycle data to a pickle file
+    # cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
+    #          'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
     # Drop the 'cell_data' column from cc_data
     cc_data = cc_data.drop('cell_data', axis=1)
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle_detailed.csv")
@@ -95,8 +114,8 @@ def generate_cellcycle_stats(df, data_path, plate):
                                              EdU_col="EdU_mean_corr_norm",
                                              H3P_col="H3P_mean_corr_norm")
 
-    # Save the cell cycle data to a CSV file
-    cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
+    # # Save the cell cycle data to a CSV file
+    # cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
 
@@ -135,8 +154,8 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
     cc_data, data_thresholds = fun_CellCycle_EdU(data=norm_data_IF, DAPI_col="DAPI_total_norm",
                                                  EdU_col="EdU_mean_corr_norm")
-    # # Save the cell cycle data to a CSV file
-    cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
+    # # # Save the cell cycle data to a CSV file
+    # cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle.csv")
     return cc_data, data_thresholds
 
 

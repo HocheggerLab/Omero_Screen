@@ -23,6 +23,7 @@ class MetaData:
     def __init__(self, plate_id, conn):
         self.conn = conn
         self.plate_obj = self.conn.getObject("Plate", plate_id)
+        print(self.plate_obj)
         self.plate = self.plate_obj.getName()
         self._extract_meta_data()
         self.df_final = pd.DataFrame()
