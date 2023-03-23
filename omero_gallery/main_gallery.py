@@ -59,7 +59,8 @@ def main():
 
     # Ask user for a specific channel
     channels_option = input('Please select the specific channel? (All/Tubulin/Dapi) ')
-
+    # Ask user for a specific channel
+    name_option = str(input('Please input the specific name for saving? (for example: Screen_test) '))
 
     if phase_option.lower()=='all':
         cc_phases=['All',"Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']
@@ -72,7 +73,7 @@ def main():
 
     for cc_phase in cc_phases:
         plot_gallery(df_gallery, cell_cycle_detailed='cell_cycle_detailed', check_phase=cc_phase,
-                     channels_option=channels_option, gallery_name='CNN_determined', nrows=num_rows, ncols=num_cols,
+                     channels_option=channels_option, gallery_name=name_option, nrows=num_rows, ncols=num_cols,
                      path=save_dir)
 
 
