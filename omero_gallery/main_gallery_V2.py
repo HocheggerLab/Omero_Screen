@@ -1,21 +1,13 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
 import os
 import random
-# from omero_screen.image_analysis import Image,ImageProperties
-import tqdm
 from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
     color_label
-import skimage
-from cellpose import models
-from skimage import measure, io
 from omero_gallery.extract_cell_samples import Image
-
-from omero_gallery.galleries_plot import plot_digits
 
 def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=None):
     """
@@ -60,32 +52,24 @@ def cell_data_extraction(plate_id,well_id,samples:dict,conn=None):
     omero_img_list=[well.getImage(number).getId() for number in range(image_number)]
     omero_img_index=[]
     samples_list=[]
-
     for images_id in samples.keys():
         if int(images_id) in omero_img_list:
             omero_img_index.append(omero_img_list.index(images_id))
         else:
             print(f'Cannot find the images id {images_id}')
-
     for idx in omero_img_index:
-        print(len(Image(well,well.getImage(idx) , meta_data, exp_paths, samples[well.getImage(idx).getId()], flatfield_dict).data))
-
         samples_list.append(Image(well,well.getImage(idx) , meta_data, exp_paths, samples[well.getImage(idx).getId()], flatfield_dict).data)
     flat_list = [item for sublist in samples_list for item in sublist]
-
     return flat_list
 
 def main():
     # Ask user for path to csv file
     file_path = input("Enter path to file: ")
-
     df=pd.read_csv(str(file_path))
     save_dir=os.path.dirname(file_path)
-
     # Ask user for number of rows and columns
     num_rows = int(input("Enter the number of rows: "))
     num_cols = int(input("Enter the number of columns: "))
-
     # Ask user for plate_id
     plate_id = int(input("Enter the plate id: "))
 
@@ -104,14 +88,9 @@ def main():
 
     df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition, image_id=image_ids)
     well_ids=df_gallery['well_id'].unique()
+
     # Ask user a specific cell cycle phase
     phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
-
-    sample_ids=fet_cell_phase_id(df=df_gallery,cell_phase=phase_option,selected_num=num_cols*num_rows)
-
-    for wel in well_ids:
-        tem_filtered_df=cell_data_extraction(plate_id,wel,sample_ids)
-    filtered_df = [item for sublist in tem_filtered_df for item in sublist]
     # Ask user for a specific channel
     channels_option = input('Please select the specific channel? (All/Tubulin/Dapi) ')
     # Ask user for a specific channel
@@ -127,10 +106,17 @@ def main():
         raise ValueError('Invalid inuput. Please enter a correct cell phase')
 
     for cc_phase in cc_phases:
-        plot_gallery(filtered_df, check_phase=cc_phase,channels_option=channels_option, gallery_name=name_option,
+        sample_ids = fet_cell_phase_id(df=df_gallery, cell_phase=phase_option, selected_num=num_cols * num_rows)
+        if len(well_ids)>1:
+            for wel in well_ids:
+                tem_filtered_df = cell_data_extraction(plate_id, wel, sample_ids)
+            filtered_images = [item for sublist in tem_filtered_df for item in sublist]
+        else:
+            filtered_images = cell_data_extraction(plate_id, well_ids[0], sample_ids)
+
+        plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channels_option, gallery_name=name_option,
                      nrows=num_rows, ncols=num_cols,
                      path=save_dir)
-
 
 if __name__=="__main__":
     main()
