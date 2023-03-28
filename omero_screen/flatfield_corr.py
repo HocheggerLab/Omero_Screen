@@ -110,12 +110,12 @@ def example_fig(data_list, well_pos, channel, path):
 if __name__ == "__main__":
     @omero_connect
     def flatfield_test(conn=None):
-        meta_data = MetaData(948, conn)
+        meta_data = MetaData(1237, conn)
         print(meta_data.channels)
-        # exp_paths = ExpPaths(meta_data)
-        # well = conn.getObject("Well", 10636)
-        # return flatfieldcorr(well, meta_data, exp_paths)
+        exp_paths = ExpPaths(meta_data)
+        well = conn.getObject("Well", 15401)
+        return flatfieldcorr(well, meta_data, exp_paths)
 
 
     flatfield_corr = flatfield_test()
-    # print(flatfield_corr['DAPI'].shape)
+    print(flatfield_corr['DAPI'].shape)

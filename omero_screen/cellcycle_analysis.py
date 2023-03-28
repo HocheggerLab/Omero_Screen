@@ -14,21 +14,6 @@ def cellcycle_analysis(df, path, plate, H3=True):
     data_path.mkdir(exist_ok=True)
     figure_path.mkdir(exist_ok=True)
 
-    # def update_G2_M_cell_cycle_detailed(row):
-    #     if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
-    #         return 'G2'
-    #     elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
-    #         return 'M'
-    #     else:
-    #         return row['cell_cycle_detailed']
-    #
-    # def update_G2_M_CNN_cell_cycle(row):
-    #     if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
-    #         return 'G2'
-    #     elif row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'M':
-    #         return 'M'
-    #     else:
-    #         return row['cell_cycle']
     def update_cell_cycle_CNN(row, detailed=False):
         if row['cell_cycle'] == 'G2/M' and row['inter_M'] == 'inter':
             return 'G2'
@@ -51,14 +36,14 @@ def cellcycle_analysis(df, path, plate, H3=True):
         cc_data['cell_cycle_detailed'] = cc_data.apply(update_cell_cycle_CNN, axis=1, detailed=True)
         cc_data['cell_cycle'] = cc_data.apply(update_cell_cycle_CNN, axis=1)
         # ensure the CNN model result only work with G2/M phase
-        cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
+        # cc_data.loc[cc_data['cell_cycle'] != "G2/M", 'inter_M'] = 'inter'
 
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
-
-    # # Save the cell cycle data to a pickle file
-    # cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", 'cell_data',
-    #          'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
+    cc_data=cc_data.drop_duplicates(subset=["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M',])
+    # Save the cell cycle data to a pickle file
+    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M', 'centroid-0','centroid-1','cell_data',
+             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
     # Drop the 'cell_data' column from cc_data
     cc_data = cc_data.drop('cell_data', axis=1)
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle_detailed.csv")
@@ -125,7 +110,7 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
                           "cell_line", "condition", "Cyto_ID", "area_cell",
 
                           # !!! Include cytoplasmic EdU and H3P intensities
-                          "intensity_mean_EdU_cyto",'inter_M']).agg(
+                          "intensity_mean_EdU_cyto",'inter_M','centroid-0','centroid-1']).agg(
         nuclei_count=("label", "count"),
         area_nucleus=("area_nucleus", "sum"),
         DAPI_total=("integrated_int_DAPI", "sum"),
@@ -133,8 +118,8 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
 
     ## intergrat the cell_date into the data_IF
     df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", "Cyto_ID", "area_cell",
-         "intensity_mean_EdU_cyto",'inter_M', 'cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
-                                      "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto", 'inter_M'])
+         "intensity_mean_EdU_cyto",'inter_M', 'centroid-0','centroid-1','cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
+                                      "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto", 'inter_M','centroid-0','centroid-1'])
     # Use the merged data for further processing
     data_IF = df_merge_cell_data.copy()
 

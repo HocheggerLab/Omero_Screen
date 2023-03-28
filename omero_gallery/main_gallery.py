@@ -1,11 +1,11 @@
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
 import os
+import random
 
 
 
-
-def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None):
+def get_gallery_df(df,plate_id,well=None,cell_line=None,condition='siCtr'):
     """
     Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition
     """
@@ -15,7 +15,7 @@ def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None):
     if cell_line is not None:
        df_gallery = df_gallery[df_gallery['cell_line'] == cell_line]
     if condition is not None:
-       df_gallery = df_gallery[df_gallery['cell_line'] == condition]
+       df_gallery = df_gallery[df_gallery['condition'] == condition]
 
     return df_gallery
 
@@ -54,6 +54,7 @@ def main():
     else:
         df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
 
+    print(df_gallery)
     # Ask user a specific cell cycle phase
     phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
 

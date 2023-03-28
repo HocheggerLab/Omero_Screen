@@ -29,7 +29,7 @@ def tensorflow_model():
     # add a second 2D convolutional layer with 64 filters
     model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
     # add dropout to prevent over fitting
-    model.add(Dropout(0.25))
+    model.add(Dropout(0.5))
     # add a thirs 2D convolutional layer with 128 filters
     model.add(Conv2D(128, kernel_size=(3, 3), activation='relu'))
     # add dropout to prevent over fitting
@@ -37,7 +37,7 @@ def tensorflow_model():
     # model.add(Conv2D(256, kernel_size=(3, 3), activation='relu'))
     # model.add(Flatten())
     # fully connected layer
-    model.add(Dense(256, activation='relu'))
+    model.add(Dense(64, activation='relu'))
     # add additional dropout to prevent overfitting
     model.add(Dropout(0.5))
     # prediction layers
@@ -54,7 +54,7 @@ def tensorflow_model():
         # set the metric as accuracy
         metrics=['accuracy']
     )
-    model = keras.models.load_model(os.path.join('../tensorflow_h5/MI_CNN_model_0320.h5'))
+    model = keras.models.load_model(os.path.join('../tensorflow_h5/MI_CNN_model_0324.h5'))
 
     return model
 
