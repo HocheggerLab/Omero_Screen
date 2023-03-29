@@ -13,10 +13,9 @@ import cv2
 import os
 
 import tensorflow as tf
-class Image:
+class Image_extract:
     """
-    generates the corrected images and segmentation masks.
-    Stores corrected images as dict, and n_mask, c_mask and cyto_mask arrays.
+    generates the corrected images Stores corrected images as dict,
     """
 
     def __init__(self, well, omero_image, meta_data, exp_paths, sample,flatfield_dict):
@@ -28,9 +27,6 @@ class Image:
         self.samples=sample
         self._flatfield_dict = flatfield_dict
         self.img_dict = self._get_img_dict()
-        # self.n_mask = self._n_segmentation()
-        # self.c_mask = self._c_segmentation()
-        # self.cyto_mask = self._get_cyto()
         self.data=self._get_data(width=20)
 
 
@@ -39,24 +35,13 @@ class Image:
         comb_image = np.dstack([empty_channel, self.img_dict['Tub'], self.img_dict['DAPI']]).astype('float32')
         comb_image=(comb_image - comb_image.min()) / comb_image.max()-comb_image.min()
         data_list =[]
-        # df_props = pd.DataFrame(measure.regionprops_table(self.c_mask, properties=('label', 'centroid',)))
-        # df_props_selected=df_props[df_props['label'].isin(self.samples)]
-        # for label in (df_props_selected['label'].tolist()):
         for centroid in (self.samples):
-
-            # centroid = region.centroid
             i = centroid[0]
             j = centroid[1]
             imin = int(round(max(0, i - width)))
             imax = int(round(min(self.img_dict['DAPI'].shape[0], i + width + 1)))
             jmin = int(round(max(0, j - width)))
             jmax = int(round(min(self.img_dict['DAPI'].shape[0], j + width + 1)))
-            # comb_image[:, :, 0] = self.c_mask
-            # red_channel= (comb_image[:, :, 0] == label) * np.ones(
-            #     (comb_image[:, :, 0].shape[0], comb_image[:, :, 0].shape[1])).copy()*0.01
-            # green_channel=((red_channel!=0) * comb_image[:, :, 1]).copy()
-            # blue_channel=((red_channel!=0) * comb_image[:, :, 2]).copy()
-            # tem_comb_image = np.dstack([red_channel, green_channel, blue_channel]).astype('float32')
             box = np.array(comb_image[imin:imax, jmin:jmax].copy())
             data_list.append(np.array(np.stack(tuple(box), axis=0)).astype('float32'))
             del box

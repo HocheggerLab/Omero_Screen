@@ -7,7 +7,7 @@ from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
     color_label
-from omero_gallery.extract_cell_samples import Image
+from omero_gallery.extract_cell_samples import Image_extract
 
 def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=None):
     """
@@ -31,19 +31,17 @@ def img_centroid_ids(random_df,image_id:int)->list:
 
     return cell_id_list
 
-def fet_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->dict:
+def get_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->dict:
     df=df[df['cell_cycle_detailed']==cell_phase]
+    print(f'{cell_phase} Total number: {len(df)}, Random select: {selected_num}')
     # Randomly sample the rows from the DataFrame
-    random_rows= df.sample(n=selected_num)
+    if selected_num> len(df):
+        random_rows= df.sample(n=len(df))
+    else:
+        random_rows = df.sample(n=selected_num)
     random_rows['centroid'] = random_rows.apply(lambda row: (row['centroid-0'], row['centroid-1']), axis=1)
     image_id_list=random_rows['image_id'].unique()
-
     sample_ids = {image_id: img_centroid_ids(random_df=random_rows, image_id=image_id) for image_id in image_id_list}
-    # sample_ids=dict()
-    # image_id_list(random_df=random_rows,image_id=image_id_list)
-    #
-    # for i in image_id_list:
-    #     sample_ids[i]=img_centroid_ids(random_df=random_rows,image_id=i)
     return sample_ids
 
 @omero_connect
@@ -62,13 +60,13 @@ def cell_data_extraction(plate_id,well_id,samples:dict,conn=None):
         else:
             print(f'Cannot find the images id {images_id}')
     for idx in omero_img_index:
-        samples_list.append(Image(well,well.getImage(idx) , meta_data, exp_paths, samples[well.getImage(idx).getId()], flatfield_dict).data)
+        samples_list.append(Image_extract(well,well.getImage(idx) , meta_data, exp_paths, samples[well.getImage(idx).getId()], flatfield_dict).data)
     flat_list = [item for sublist in samples_list for item in sublist]
     return flat_list
 
 def main():
     # Ask user for path to csv file
-    file_path = input("Enter path to file: ")
+    file_path = input("Enter path to cellcycle_detailed file: ")
     df=pd.read_csv(str(file_path))
     save_dir=os.path.dirname(file_path)
     # Ask user for number of rows and columns
@@ -110,7 +108,7 @@ def main():
         raise ValueError('Invalid inuput. Please enter a correct cell phase')
 
     for cc_phase in cc_phases:
-        sample_ids = fet_cell_phase_id(df=df_gallery, cell_phase=phase_option, selected_num=num_cols * num_rows)
+        sample_ids = get_cell_phase_id(df=df_gallery, cell_phase=cc_phase, selected_num=num_cols * num_rows)
         if len(well_ids)>1:
             for wel in well_ids:
                 tem_filtered_df = cell_data_extraction(plate_id, wel, sample_ids)
@@ -118,9 +116,13 @@ def main():
         else:
             filtered_images = cell_data_extraction(plate_id, well_ids[0], sample_ids)
 
-        plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channels_option, gallery_name=name_option,
-                     nrows=num_rows, ncols=num_cols,
-                     path=save_dir)
+        if filtered_images:  # Add this line to check if the list is not empty
+            plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channels_option,
+                         gallery_name=name_option,
+                         nrows=num_rows,
+                         path=save_dir)
+        else:
+            print(f"No images found for phase {cc_phase}. Skipping this phase.")
 
 if __name__=="__main__":
     main()
