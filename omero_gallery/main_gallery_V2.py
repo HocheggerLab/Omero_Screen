@@ -24,22 +24,26 @@ def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=
        df_gallery= df_gallery[df_gallery['image_id'].isin(image_id)]
     return df_gallery
 
-def fet_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->list:
-    df=df[df['cell_cycle_detailed']==cell_phase]
-    image_id_list=df['image_id'].unique()
-    image_tem_id=selected_num//len(image_id_list)
-    sample_ids=dict()
-    def each_imeage(image_id,image_tem_id:int)->list:
-        tem_df=df[df['image_id']==image_id]
-        phase_id_list = tem_df['Cyto_ID'].tolist()
-        if image_tem_id > len(phase_id_list):
-            sample_ids = random.sample(phase_id_list, len(phase_id_list))
-        else:
-            sample_ids = random.sample(phase_id_list, image_tem_id)
-        return sample_ids
 
-    for i in image_id_list:
-        sample_ids[i]=each_imeage(image_id=i,image_tem_id=image_tem_id)
+def img_centroid_ids(random_df,image_id:int)->list:
+    tem_df=random_df[random_df['image_id']==image_id]
+    cell_id_list = tem_df['centroid'].tolist()
+
+    return cell_id_list
+
+def fet_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->dict:
+    df=df[df['cell_cycle_detailed']==cell_phase]
+    # Randomly sample the rows from the DataFrame
+    random_rows= df.sample(n=selected_num)
+    random_rows['centroid'] = random_rows.apply(lambda row: (row['centroid-0'], row['centroid-1']), axis=1)
+    image_id_list=random_rows['image_id'].unique()
+
+    sample_ids = {image_id: img_centroid_ids(random_df=random_rows, image_id=image_id) for image_id in image_id_list}
+    # sample_ids=dict()
+    # image_id_list(random_df=random_rows,image_id=image_id_list)
+    #
+    # for i in image_id_list:
+    #     sample_ids[i]=img_centroid_ids(random_df=random_rows,image_id=i)
     return sample_ids
 
 @omero_connect
@@ -97,7 +101,7 @@ def main():
     name_option = str(input('Please input the specific name for saving? (for example: Screen_test) '))
 
     if phase_option.lower()=='all':
-        cc_phases=['All',"Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']
+        cc_phases=["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']
 
     elif phase_option in ["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']:
         cc_phases = [phase_option.capitalize()]
