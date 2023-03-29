@@ -1,70 +1,48 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
 import os
 import random
+from omero_gallery.gen_functions_gallery import get_gallery_df,get_cell_phase_id,cell_data_extraction
 
 
-
-def get_gallery_df(df,plate_id,well=None,cell_line=None,condition='siCtr'):
-    """
-    Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition
-    """
-    df_gallery = df[df['plate_id'] == plate_id]
-    if well is not None:
-       df_gallery = df_gallery[df_gallery['well_id'] == well]
-    if cell_line is not None:
-       df_gallery = df_gallery[df_gallery['cell_line'] == cell_line]
-    if condition is not None:
-       df_gallery = df_gallery[df_gallery['condition'] == condition]
-
-    return df_gallery
 
 def main():
-    # Ask user for plate id
-    plate_id=int(input("Enter the plate id: "))
-
     # Ask user for path to csv file
-    file_path = input("Enter path to file: ")
-    df=pd.read_pickle(str(file_path))
+    file_path = input("Enter path to cellcycle_detailed file: ")
+    df=pd.read_csv(str(file_path))
     save_dir=os.path.dirname(file_path)
-
     # Ask user for number of rows and columns
     num_rows = int(input("Enter the number of rows: "))
     num_cols = int(input("Enter the number of columns: "))
+    # Ask user for plate_id
+    plate_id = int(input("Enter the plate id: "))
 
+    # Initialize variables for user input
+    well = cell_line = condition = image_ids = None
     # Ask user if they want to select a specific well or all wells
-    well_option=input("Do you want to select a specific well? (Yes/No): ")
-    well= None
-    cell_line = None
-    condition=None
-    if well_option.lower()=='yes':
-        well=int(input('Enter the well_id: '))
-        cell_line_option = input("Do you want to select a cell_line? (Yes/No): ")
-        # cell_line=None
-        df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
-        if cell_line_option.lower()=='yes':
-            cell_line=str(input('Enter the cell_line '))
-            condition_option=input('Do you want to select a condition? (Yes/No):')
-            condition=None
-            df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
-            if condition_option.lower()=='yes':
-                condition=input('Enter the condition: ')
-                df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
+    if input("Do you want to select a specific well? (Yes/No): ").lower() == 'yes':
+        well = int(input('Enter the well_id: '))
+        if input("Do you want to select a cell_line? (Yes/No): ").lower()=='yes':
+            cell_line = input('Enter the cell_line: ')
+            if input("Do you want to select a condition? (Yes/No): ").lower() == 'yes':
+                condition = input('Enter the condition: ')
+                if input("Do you want to select specific image_id? (Yes/No): ").lower() == 'yes':
+                    image_id_input = input('Enter the image_Id (comma-separated for multiple ids): ')
+                    image_ids = [int(id.strip()) for id in image_id_input.split(',')]
 
-    else:
-        df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
+    df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition, image_id=image_ids)
+    well_ids=df_gallery['well_id'].unique()
 
-    print(df_gallery)
     # Ask user a specific cell cycle phase
     phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
-
     # Ask user for a specific channel
     channels_option = input('Please select the specific channel? (All/Tubulin/Dapi) ')
     # Ask user for a specific channel
     name_option = str(input('Please input the specific name for saving? (for example: Screen_test) '))
 
     if phase_option.lower()=='all':
-        cc_phases=['All',"Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']
+        cc_phases=["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']
 
     elif phase_option in ["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']:
         cc_phases = [phase_option.capitalize()]
@@ -73,17 +51,22 @@ def main():
         raise ValueError('Invalid inuput. Please enter a correct cell phase')
 
     for cc_phase in cc_phases:
-        plot_gallery(df_gallery, cell_cycle_detailed='cell_cycle_detailed', check_phase=cc_phase,
-                     channels_option=channels_option, gallery_name=name_option, nrows=num_rows, ncols=num_cols,
-                     path=save_dir)
+        sample_ids = get_cell_phase_id(df=df_gallery, cell_phase=cc_phase, selected_num=num_cols * num_rows)
+        if len(well_ids)>1:
+            for wel in well_ids:
+                tem_filtered_df = cell_data_extraction(plate_id, wel, sample_ids)
+            filtered_images = [item for sublist in tem_filtered_df for item in sublist]
+        else:
+            filtered_images = cell_data_extraction(plate_id, well_ids[0], sample_ids)
 
-
+        if filtered_images:  # Add this line to check if the list is not empty
+            plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channels_option,
+                         gallery_name=name_option,
+                         nrows=num_rows,
+                         path=save_dir)
+        else:
+            print(f"No images found for phase {cc_phase}. Skipping this phase.")
 
 if __name__=="__main__":
     main()
-
-
-
-
-
 

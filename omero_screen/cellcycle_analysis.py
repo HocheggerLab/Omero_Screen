@@ -41,9 +41,7 @@ def cellcycle_analysis(df, path, plate, H3=True):
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
     cc_data=cc_data.drop_duplicates(subset=["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M',])
-    # Save the cell cycle data to a pickle file
-    cc_data[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M', 'centroid-0','centroid-1','cell_data',
-             'cell_cycle_detailed', 'cell_cycle']].to_pickle(data_path / f"{plate}_singlecell_cellcycle_detailed_imagedata")
+
     # Drop the 'cell_data' column from cc_data
     cc_data = cc_data.drop('cell_data', axis=1)
     cc_data.to_csv(data_path / f"{plate}_singlecell_cellcycle_detailed.csv")
