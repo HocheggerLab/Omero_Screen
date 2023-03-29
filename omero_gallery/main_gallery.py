@@ -32,8 +32,10 @@ def main():
                     image_ids = [int(id.strip()) for id in image_id_input.split(',')]
 
     df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition, image_id=image_ids)
+    if df_gallery.empty:
+        print("No data found based on the provided filters. Please check your input parameters.")
+        return
     well_ids=df_gallery['well_id'].unique()
-
     # Ask user a specific cell cycle phase
     phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
     # Ask user for a specific channel
@@ -52,12 +54,8 @@ def main():
 
     for cc_phase in cc_phases:
         sample_ids = get_cell_phase_id(df=df_gallery, cell_phase=cc_phase, selected_num=num_cols * num_rows)
-        if len(well_ids)>1:
-            for wel in well_ids:
-                tem_filtered_df = cell_data_extraction(plate_id, wel, sample_ids)
-            filtered_images = [item for sublist in tem_filtered_df for item in sublist]
-        else:
-            filtered_images = cell_data_extraction(plate_id, well_ids[0], sample_ids)
+        filtered_images = cell_data_extraction(plate_id, sample_ids)
+
 
         if filtered_images:  # Add this line to check if the list is not empty
             plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channels_option,

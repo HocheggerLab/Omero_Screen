@@ -28,8 +28,6 @@ def main(plate_id, conn=None):
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):
-        if count in range(0,3):
-            continue
         ann = well.getAnnotation(Defaults.NS)
         try:
             cell_line = dict(ann.getValue())['cell_line']
@@ -60,8 +58,7 @@ def main(plate_id, conn=None):
     else:
         cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
 
-    # if cc_data is not None:
-    #     gallery_data(cc_data,cell_cycle_detaild='cell_cycle_detailed',check_phase='M', gallery_name='CNN_determined',total=25,images_per_row=5)
+
 
 
 

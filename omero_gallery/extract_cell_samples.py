@@ -1,18 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from tensorflow_model.tf_model import tensorflow_model
-from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
     color_label
-import skimage
-from cellpose import models
 from skimage import measure, io
-import cv2
-import os
 
-import tensorflow as tf
 class Image_extract:
     """
     generates the corrected images Stores corrected images as dict,
@@ -66,39 +59,6 @@ class Image_extract:
             corr_img = generate_image(self.omero_image, channel[1]) / self._flatfield_dict[channel[0]]
             img_dict[channel[0]] = corr_img[30:1050, 30:1050]  # using channel key here to link each image with its channel
         return img_dict
-
-    # def _get_models(self):
-    #     """
-    #     Matches well with cell line and gets model_path for cell line from plate_layout
-    #     :param number: int 0 or 1, 0 for nuclei model, 1 for cell model
-    #     :return: path to model (str)
-    #     """
-    #     return Defaults.MODEL_DICT[self.cell_line.replace(" ", "").upper()]
-
-    # def _n_segmentation(self):
-    #     """perform cellpose segmentation using nuclear mask """
-    #     model = models.CellposeModel(gpu=True, model_type=os.path.dirname(os.getcwd())+'/data/CellPose_models/'+Defaults.MODEL_DICT['nuclei'])
-    #
-    #     n_channels = [[0, 0]]
-    #     n_mask_array, n_flows, n_styles = model.eval(self.img_dict['DAPI'], channels=n_channels)
-    #     # return cleaned up mask using filter function
-    #     return filter_segmentation(n_mask_array)
-
-    # def _c_segmentation(self):
-    #     """perform cellpose segmentation using cell mask """
-    #     model = models.CellposeModel(gpu=True, model_type=os.path.dirname(os.getcwd())+'/data/CellPose_models/'+self._get_models())
-    #     c_channels = [[2, 1]]
-    #     # combine the 2 channel numpy array for cell segmentation with the nuclei channel
-    #     comb_image = np.dstack([self.img_dict['DAPI'], self.img_dict['Tub']])
-    #     c_masks_array, c_flows, c_styles = model.eval(comb_image, channels=c_channels)
-    #     # return cleaned up mask using filter function
-    #     return filter_segmentation(c_masks_array)
-
-    # def _get_cyto(self):
-    #     """substract nuclei mask from cell mask to get cytoplasm mask """
-    #     overlap = (self.c_mask != 0) * (self.n_mask != 0)
-    #     cyto_mask_binary = (self.c_mask != 0) * (overlap == 0)
-    #     return self.c_mask * cyto_mask_binary
 
     def segmentation_figure(self):
         """Generate matplotlib image for segmentation check and save to path (quality control)
