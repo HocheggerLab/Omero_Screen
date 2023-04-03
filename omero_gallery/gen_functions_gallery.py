@@ -47,6 +47,9 @@ def well_images_dict(well_dict:dict,image_dict:dict)->dict:
 
 def get_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->dict:
     df=df[df['cell_cycle_detailed']==cell_phase]
+    if df.empty:
+        print(f"No rows with cell_phase '{cell_phase}' found.")
+        return {}
     print(f'{cell_phase} Total number: {len(df)}, Random select: {selected_num}')
     # Randomly sample the rows from the DataFrame
     if selected_num> len(df):
@@ -82,9 +85,11 @@ def cell_data_extraction(plate_id,samples:dict,conn=None):
                 Image_extract(well, image, meta_data, exp_paths, samples[well_id][image.getId()], flatfield_dict).data)
 
             # samples_list.append(Image_extract(well,well.getImage(idx) , meta_data, exp_paths, samples[str(well)][well.getImage(idx).getId()], flatfield_dict).data)
-
-    if isinstance(samples_list[0],list):
-        flat_list = [item for sublist in samples_list for item in sublist]
+    if samples_list:  # Check if samples_list is not empty
+        if isinstance(samples_list[0],list):
+           flat_list = [item for sublist in samples_list for item in sublist]
+        else:
+           flat_list=samples_list
     else:
-        flat_list=samples_list
+        flat_list=[]
     return flat_list

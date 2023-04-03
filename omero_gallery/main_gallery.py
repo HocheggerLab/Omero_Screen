@@ -35,9 +35,8 @@ def main():
     if df_gallery.empty:
         print("No data found based on the provided filters. Please check your input parameters.")
         return
-    well_ids=df_gallery['well_id'].unique()
     # Ask user a specific cell cycle phase
-    phase_option = input("Please select a specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
+    phase_option = input("Please select adf specific cell cycle phase? (All/Sub-G1/Polyploid/G1/Early S/Late S/Polyploid(replicating)/G2/M) ")
     # Ask user for a specific channel
     channels_option = input('Please select the specific channel? (All/Tubulin/Dapi) ')
     # Ask user for a specific channel
