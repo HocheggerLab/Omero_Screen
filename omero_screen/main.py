@@ -28,6 +28,8 @@ def main(plate_id, conn=None):
     df_final = pd.DataFrame()
     df_quality_control = pd.DataFrame()
     for count, well in enumerate(list(meta_data.plate_obj.listChildren())):
+        # if count in range(35,96):
+        #     continue
         ann = well.getAnnotation(Defaults.NS)
         try:
             cell_line = dict(ann.getValue())['cell_line']
@@ -66,7 +68,10 @@ def main(plate_id, conn=None):
 
 if __name__ == '__main__':
     # main(928)
-    main(1237)
+    # main(1217)
+    # main(1215)
+    main(1216)
+    # main(1213)
     # main(1054)
     # main(1125)
     # main(1056)
