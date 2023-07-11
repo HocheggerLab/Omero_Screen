@@ -136,7 +136,7 @@ class NucImageProperties:
             self._image.omero_image.getId(),
             ]
         cond_list.extend(iter(self._cond_dict.values()))
-        col_list = ["experiment", "plate_id", "well", "well_id", "image_id"]
+        col_list = ["experiment", "plate_id", "well_number", "well_id", "image_id"]
         col_list.extend(iter(self._cond_dict.keys()))
         col_list_edited = [entry.lower() for entry in col_list]
         edited_props_data[col_list_edited] = cond_list

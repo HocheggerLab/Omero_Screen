@@ -40,7 +40,7 @@ def cellcycle_analysis(df, path, plate, H3=True):
 
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle')
     cellcycle_stats(cc_data, data_path, plate, 'cell_cycle_detailed')
-    cc_data=cc_data.drop_duplicates(subset=["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M',])
+    cc_data=cc_data.drop_duplicates(subset=["experiment", "plate_id", "well_number", "well_id", "image_id", "cell_line", "condition",'Cyto_ID','inter_M',])
 
     # Drop the 'cell_data' column from cc_data
     cc_data = cc_data.drop('cell_data', axis=1)
@@ -48,8 +48,8 @@ def cellcycle_analysis(df, path, plate, H3=True):
 
 
 def cellcycle_stats(df, path, plate, col_name):
-    df_percentage = (df.groupby(['well', 'cell_line', 'condition', col_name])['experiment'].count() /
-                     df.groupby(['well', 'cell_line', 'condition'])['experiment'].count()) * 100
+    df_percentage = (df.groupby(['well_number', 'cell_line', 'condition', col_name])['experiment'].count() /
+                     df.groupby(['well_number', 'cell_line', 'condition'])['experiment'].count()) * 100
     df_final = df_percentage.reset_index()
     df_final.to_csv(path / f"{plate}_{col_name}_well.csv")
     df_mean = df_final.groupby(['condition', 'cell_line', col_name])['experiment'].agg(['mean', 'std']).reset_index()
@@ -58,7 +58,7 @@ def cellcycle_stats(df, path, plate, col_name):
 
 def generate_cellcycle_stats(df, data_path, plate):
     df.condition = df.condition.str.replace('/', '+')  # / makes problem when saving files later
-    data_IF = df.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
+    data_IF = df.groupby(["experiment", "plate_id", "well_number", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell",
 
                           # !!! Include cytoplasmic EdU and H3P intensities
@@ -72,8 +72,8 @@ def generate_cellcycle_stats(df, data_path, plate):
         H3P_mean=("intensity_mean_H3P_nucleus", "mean")).reset_index()
 
     # Merge cell data into the aggregate statistics
-    df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id","cell_line", "condition", "Cyto_ID", "area_cell",
-                          "intensity_mean_EdU_cyto","intensity_mean_H3P_cyto", 'inter_M','cell_data']], on=["experiment", "plate_id", "well", "well_id", "image_id",
+    df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well_number", "well_id", "image_id","cell_line", "condition", "Cyto_ID", "area_cell",
+                          "intensity_mean_EdU_cyto","intensity_mean_H3P_cyto", 'inter_M','cell_data']], on=["experiment", "plate_id", "well_number", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell","intensity_mean_EdU_cyto", "intensity_mean_H3P_cyto", 'inter_M'])
 
     # Use the merged data for further processing
@@ -104,7 +104,7 @@ def generate_cellcycle_stats(df, data_path, plate):
 
 def generate_cellcycle_stats_EdU(df, data_path, plate):
     df.condition = df.condition.str.replace('/', '+')  # / makes problem when saving files later
-    data_IF = df.groupby(["experiment", "plate_id", "well", "well_id", "image_id",
+    data_IF = df.groupby(["experiment", "plate_id", "well_number", "well_id", "image_id",
                           "cell_line", "condition", "Cyto_ID", "area_cell",
 
                           # !!! Include cytoplasmic EdU and H3P intensities
@@ -115,8 +115,8 @@ def generate_cellcycle_stats_EdU(df, data_path, plate):
         EdU_mean=("intensity_mean_EdU_nucleus", "mean")).reset_index()
 
     ## intergrat the cell_date into the data_IF
-    df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well", "well_id", "image_id", "cell_line", "condition", "Cyto_ID", "area_cell",
-         "intensity_mean_EdU_cyto",'inter_M', 'centroid-0','centroid-1','cell_data']],on=["experiment", "plate_id", "well", "well_id", "image_id",
+    df_merge_cell_data = pd.merge(data_IF, df[["experiment", "plate_id", "well_number", "well_id", "image_id", "cell_line", "condition", "Cyto_ID", "area_cell",
+         "intensity_mean_EdU_cyto",'inter_M', 'centroid-0','centroid-1','cell_data']],on=["experiment", "plate_id", "well_number", "well_id", "image_id",
                                       "cell_line", "condition", "Cyto_ID", "area_cell", "intensity_mean_EdU_cyto", 'inter_M','centroid-0','centroid-1'])
     # Use the merged data for further processing
     data_IF = df_merge_cell_data.copy()
