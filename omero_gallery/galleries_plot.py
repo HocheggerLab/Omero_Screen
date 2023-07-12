@@ -84,8 +84,8 @@ def plot_digits(sample, images_per_row, phase,):
     # Add empty images to fill the last row
     images.extend([np.zeros((height, width, img_shape[2]))] * n_empty)
     images = merge_images(images, images_per_row, border_size_ratio=0.03, border_color=(255, 0, 255))
-    plt.imshow(images)
-    plt.show()
+    # plt.imshow(images)
+    # plt.show()
     return images
 
 
