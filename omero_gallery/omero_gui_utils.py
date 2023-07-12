@@ -1,4 +1,4 @@
-
+import matplotlib.pyplot as plt
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
@@ -100,4 +100,7 @@ class MyWidget(QWidget):
         print(f"Cell phase: {cell_phase}")
         # Here you should put your code to load and visualize images using the given parameters.
         self.image_gallery=processing_image(plate_id, file_path, num_rows, num_cols,well_id,condition, cell_line,cell_phase,channel)
-        self.viewer.add_image(self.image_gallery)
+        plt.imshow(self.image_gallery)
+        plt.show()
+        self.viewer.add_image(self.image_gallery,contrast_limits=[0, 1], rgb=True)
+
