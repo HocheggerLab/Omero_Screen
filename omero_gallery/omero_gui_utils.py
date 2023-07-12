@@ -5,19 +5,24 @@ from omero_gallery.galleries_plot import plot_gallery
 from omero_gallery.gen_functions_gallery import get_cell_phase_id,cell_data_extraction
 
 
+def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None):
+    """
+    Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition
+    """
+    df_gallery = df.loc[df['plate_id'] == int(plate_id)]
+    if well is not None:
+       df_gallery = df_gallery.loc[df_gallery['well_id'] == well]
+    if cell_line is not None:
+       df_gallery = df_gallery.loc[df_gallery['cell_line'] == cell_line]
+    if condition is not None:
+       df_gallery = df_gallery.loc[df_gallery['condition'] == condition]
+
+    return df_gallery
+
 def processing_image(plate_id, file_path, num_rows, num_cols,well,condition, cell_line,cell_phase,channel):
 
     df = pd.read_csv(str(file_path))
-    # if well is not None:
-    #     df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
-    #     if cell_line is not None:
-    #         df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
-    #         if condition is not None:
-    #             df_gallery = get_gallery_df(df, plate_id, well=well, cell_line=cell_line, condition=condition)
-    # else:
-    #     # df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
-    df_gallery=df
-
+    df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
     if cell_phase in ["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']:
         cc_phases = [cell_phase.capitalize()]
     else:
@@ -29,7 +34,6 @@ def processing_image(plate_id, file_path, num_rows, num_cols,well,condition, cel
     if filtered_images:  # Add this line to check if the list is not empty
         image_gallery=plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channel,
                      nrows=num_rows)
-
     else:
         print(f"No images found for phase {cc_phase}. Skipping this phase.")
 
@@ -82,9 +86,9 @@ class MyWidget(QWidget):
         file_path = self.file_path_edit.text()
         num_rows = int(self.num_rows_edit.text())
         num_cols = int(self.num_cols_edit.text())
-        well_id = self.Well_ID_edit.text()
-        condition = self.condition_edit.text()
-        cell_line = self.cell_line_edit.text()
+        well_id = int(self.Well_ID_edit.text()) or None
+        condition = self.condition_edit.text() or None
+        cell_line = self.cell_line_edit.text() or None
         channel = self.channel_edit.text()
         cell_phase = self.cell_phase_edit.text()
 
@@ -98,7 +102,12 @@ class MyWidget(QWidget):
         print(f"cell_line: {cell_line}")
         print(f"channel: {channel}")
         print(f"Cell phase: {cell_phase}")
+
         # Here you should put your code to load and visualize images using the given parameters.
-        self.image_gallery=processing_image(plate_id, file_path, num_rows, num_cols,well_id,condition, cell_line,cell_phase,channel)
+        self.image_gallery=processing_image(plate_id, file_path, num_rows,  num_cols,well_id,condition, cell_line,cell_phase,channel)
         self.viewer.add_image(self.image_gallery,contrast_limits=[0, 1], rgb=True)
 
+if __name__=="__main__":
+
+    processing_image(plate_id=1237,file_path='/Users/haoranyue/Desktop/OmeroScreen_test/cellcycle_summary/OmeroScreen_test_singlecell_cellcycle_detailed.csv',
+                     num_rows=2, num_cols=2,well=15401,condition='siCtr', cell_line='U2OS',cell_phase='G1',channel="all")
