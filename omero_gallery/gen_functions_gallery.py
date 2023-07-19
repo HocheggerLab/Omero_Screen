@@ -4,26 +4,27 @@ from omero_screen.data_structure import Defaults, MetaData, ExpPaths
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import  omero_connect
 from omero_gallery.extract_cell_samples import Image_extract
+from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
+    color_label
+import numpy as np
 
 
 
 
-
-
-def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=None):
-    """
-    Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition,image_id
-    """
-    df_gallery = df[df['plate_id'] == plate_id]
-    if well is not None:
-       df_gallery = df_gallery[df_gallery['well_id']==well]
-    if cell_line is not None:
-       df_gallery = df_gallery[df_gallery['cell_line']==cell_line]
-    if condition is not None:
-       df_gallery = df_gallery[df_gallery['condition']==condition]
-    if image_id is not None:
-       df_gallery= df_gallery[df_gallery['image_id'].isin(image_id)]
-    return df_gallery
+# def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=None):
+#     """
+#     Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition,image_id
+#     """
+#     df_gallery = df[df['plate_id'] == plate_id]
+#     if well is not None:
+#        df_gallery = df_gallery[df_gallery['well_id']==well]
+#     if cell_line is not None:
+#        df_gallery = df_gallery[df_gallery['well_id']==cell_line]
+#     if condition is not None:
+#        df_gallery = df_gallery[df_gallery['condition']==condition]
+#     if image_id is not None:
+#        df_gallery= df_gallery[df_gallery['image_id'].isin(image_id)]
+#     return df_gallery
 
 
 def img_centroid_ids(random_df,image_id:int)->list:
@@ -93,3 +94,39 @@ def cell_data_extraction(plate_id,samples:dict,conn=None):
     else:
         flat_list=[]
     return flat_list
+
+
+@omero_connect
+def load_well_image(plate_id,well_id,conn=None):
+    meta_data = MetaData(plate_id, conn)
+    exp_paths = ExpPaths(meta_data)
+    well = conn.getObject("Well", well_id)
+    flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
+    omero_well_img_list = [well.getImage(number).getId() for number in range(len(list(well.listChildren())))]
+    img_list={}
+    for idx in omero_well_img_list:
+        image = conn.getObject("Image", idx)
+        img_dict=get_img_dict(meta_data,flatfield_dict,image)
+        assert img_dict['Tub'].shape == img_dict['DAPI'].shape == img_dict['EdU'].shape == img_dict['H3P'].shape, "All images must have the same shape"
+
+        # Stack the images along a new axis to create a 4-channel image
+        image_4channel = np.stack((img_dict['DAPI'], img_dict['Tub'], img_dict['EdU']), axis=-1)
+        comb_image = (image_4channel - image_4channel.min()) / (image_4channel.max() - image_4channel.min())
+        img_list[idx]=comb_image
+
+    return img_list
+
+def get_img_dict(meta_data,flatfield_dict,image):
+        """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image"""
+        img_dict = {}
+        for channel in list(meta_data.channels.items()):  # produces a tuple of channel key value pair (ie ('DAPI':0)
+            corr_img = generate_image(image, channel[1]) / flatfield_dict[channel[0]]
+            img_dict[channel[0]] = corr_img[30:1050,30:1050]
+        return img_dict
+
+
+if __name__=='__main__':
+    img_list=load_well_image(1237,15401)
+
+    plt.imshow(img_list[452327])
+    plt.show()

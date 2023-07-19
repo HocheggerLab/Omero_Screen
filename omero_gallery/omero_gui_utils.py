@@ -1,28 +1,25 @@
 import matplotlib.pyplot as plt
+import skimage.io
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
-from omero_gallery.gen_functions_gallery import get_cell_phase_id,cell_data_extraction
+from omero_gallery.gen_functions_gallery import get_cell_phase_id,cell_data_extraction,load_well_image
 
 
-def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None):
+def get_gallery_df(df,plate_id,well_id=None):
     """
     Return a filtered version of the input Dataframe based on the plate_id, welll, cell_line,condition
     """
     df_gallery = df.loc[df['plate_id'] == int(plate_id)]
-    if well is not None:
-       df_gallery = df_gallery.loc[df_gallery['well_id'] == well]
-    if cell_line is not None:
-       df_gallery = df_gallery.loc[df_gallery['cell_line'] == cell_line]
-    if condition is not None:
-       df_gallery = df_gallery.loc[df_gallery['condition'] == condition]
+    if well_id is not None:
+       df_gallery = df_gallery.loc[df_gallery['well_id'] == well_id]
 
     return df_gallery
 
-def processing_image(plate_id, file_path, num_rows, num_cols,well,condition, cell_line,cell_phase,channel):
+def processing_image(plate_id, file_path, num_rows, num_cols,well_id,cell_phase,channel):
 
     df = pd.read_csv(str(file_path))
-    df_gallery=get_gallery_df(df,plate_id,well=well,cell_line=cell_line,condition=condition)
+    df_gallery=get_gallery_df(df,plate_id,well_id=well_id)
     if cell_phase in ["Sub-G1",'Polyploid', 'G1', 'Early S', 'Late S', 'Polyploid(replicating)', 'G2', 'M']:
         cc_phases = [cell_phase.capitalize()]
     else:
@@ -52,9 +49,7 @@ class MyWidget(QWidget):
         self.file_path_edit = QLineEdit()
         self.num_rows_edit = QLineEdit()
         self.num_cols_edit = QLineEdit()
-        self.Well_ID_edit = QLineEdit()
-        self.condition_edit = QLineEdit()
-        self.cell_line_edit = QLineEdit()
+        self.Well_id_edit = QLineEdit()
         self.channel_edit = QLineEdit()
         self.cell_phase_edit = QLineEdit()
 
@@ -62,16 +57,12 @@ class MyWidget(QWidget):
         self.layout().addWidget(self.plate_id_edit)
         self.layout().addWidget(QLabel('File path:'))
         self.layout().addWidget(self.file_path_edit)
+        self.layout().addWidget(QLabel('Well_id:'))
+        self.layout().addWidget(self.Well_id_edit)
         self.layout().addWidget(QLabel('Num rows:'))
         self.layout().addWidget(self.num_rows_edit)
         self.layout().addWidget(QLabel('Num cols:'))
         self.layout().addWidget(self.num_cols_edit)
-        self.layout().addWidget(QLabel('Well_ID:'))
-        self.layout().addWidget(self.Well_ID_edit)
-        self.layout().addWidget(QLabel('Condition:'))
-        self.layout().addWidget(self.condition_edit)
-        self.layout().addWidget(QLabel('Cell line:'))
-        self.layout().addWidget(self.cell_line_edit)
         self.layout().addWidget(QLabel('Channel:'))
         self.layout().addWidget(self.channel_edit)
         self.layout().addWidget(QLabel('Cell phase:'))
@@ -81,33 +72,43 @@ class MyWidget(QWidget):
         self.btn.clicked.connect(self.load_images)
         self.layout().addWidget(self.btn)
 
+        self.save_btn = QPushButton('Save', self)
+        self.save_btn.clicked.connect(self.save_process)
+        self.layout().addWidget(self.save_btn)
     def load_images(self):
         plate_id = self.plate_id_edit.text()
         file_path = self.file_path_edit.text()
-        num_rows = int(self.num_rows_edit.text())
-        num_cols = int(self.num_cols_edit.text())
-        well_id = int(self.Well_ID_edit.text()) or None
-        condition = self.condition_edit.text() or None
-        cell_line = self.cell_line_edit.text() or None
-        channel = self.channel_edit.text()
-        cell_phase = self.cell_phase_edit.text()
+        num_rows = int(self.num_rows_edit.text()) if self.num_rows_edit.text() else None
+        num_cols = int(self.num_cols_edit.text()) if self.num_cols_edit.text() else None
+        well_id = int(self.Well_id_edit.text())
+        channel = self.channel_edit.text() if self.channel_edit.text() else None
+        cell_phase = self.cell_phase_edit.text() if self.cell_phase_edit.text() else None
 
-        # For this version, we're just printing the values
+        self.log_parameters(plate_id,file_path,num_rows,num_cols,well_id,channel,cell_phase)
+
+        # Check if the necessary parameters are provided
+        if plate_id and file_path and well_id is not None:
+            self.image_list = load_well_image(plate_id, well_id)
+            for i in self.image_list.keys():
+                self.viewer.add_image(self.image_list[i], name=str(i), contrast_limits=[0, 1], rgb=True)
+
+        if plate_id and file_path and well_id and num_cols and channel and cell_phase and num_rows is not None:
+            self.image_gallery = processing_image(plate_id, file_path, num_rows, num_cols, well_id, cell_phase, channel)
+            self.viewer.add_image(self.image_gallery, contrast_limits=[0, 1], rgb=True)
+
+    def log_parameters(self, plate_id, file_path, num_rows, num_cols, well_id, channel, cell_phase):
         print(f"Plate ID: {plate_id}")
         print(f"File path: {file_path}")
         print(f"Num rows: {num_rows}")
         print(f"Num cols: {num_cols}")
         print(f"Well ID: {well_id}")
-        print(f"condition: {condition}")
-        print(f"cell_line: {cell_line}")
         print(f"channel: {channel}")
         print(f"Cell phase: {cell_phase}")
 
-        # Here you should put your code to load and visualize images using the given parameters.
-        self.image_gallery=processing_image(plate_id, file_path, num_rows,  num_cols,well_id,condition, cell_line,cell_phase,channel)
-        self.viewer.add_image(self.image_gallery,contrast_limits=[0, 1], rgb=True)
+    def save_process(self):
+        print('Save the current image')
+
 
 if __name__=="__main__":
-
     processing_image(plate_id=1237,file_path='/Users/haoranyue/Desktop/OmeroScreen_test/cellcycle_summary/OmeroScreen_test_singlecell_cellcycle_detailed.csv',
-                     num_rows=2, num_cols=2,well=15401,condition='siCtr', cell_line='U2OS',cell_phase='G1',channel="all")
+                     num_rows=2, num_cols=2,well_id=15401,cell_phase='G1',channel="all")
