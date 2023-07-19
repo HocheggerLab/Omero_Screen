@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import skimage.io
+import os
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
@@ -106,7 +106,17 @@ class MyWidget(QWidget):
         print(f"Cell phase: {cell_phase}")
 
     def save_process(self):
-        print('Save the current image')
+        # Get the current layer (image)
+        current_layer = self.viewer.layers.selection.active
+
+        if current_layer is not None:
+            # Specify the path where you want to save the image
+            save_path = os.path.expanduser(f"~/Desktop/OmeroScreen_test/figures/{current_layer.name}.tif")
+
+            # Save the image
+            current_layer.save(save_path)
+        else:
+            print("No active layer to save.")
 
 
 if __name__=="__main__":
