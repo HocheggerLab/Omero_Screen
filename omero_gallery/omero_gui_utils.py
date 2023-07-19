@@ -75,6 +75,7 @@ class MyWidget(QWidget):
         self.save_btn = QPushButton('Save', self)
         self.save_btn.clicked.connect(self.save_process)
         self.layout().addWidget(self.save_btn)
+
     def load_images(self):
         plate_id = self.plate_id_edit.text()
         file_path = self.file_path_edit.text()
@@ -84,17 +85,17 @@ class MyWidget(QWidget):
         channel = self.channel_edit.text() if self.channel_edit.text() else None
         cell_phase = self.cell_phase_edit.text() if self.cell_phase_edit.text() else None
 
-        self.log_parameters(plate_id,file_path,num_rows,num_cols,well_id,channel,cell_phase)
+        self.log_parameters(plate_id, file_path, num_rows, num_cols, well_id, channel, cell_phase)
 
         # Check if the necessary parameters are provided
-        if plate_id and file_path and well_id is not None:
+        if plate_id and file_path and well_id is not None and num_cols is None and channel is None and cell_phase is None and num_rows is None:
             self.image_list = load_well_image(plate_id, well_id)
             for i in self.image_list.keys():
                 self.viewer.add_image(self.image_list[i], name=str(i), contrast_limits=[0, 1], rgb=True)
 
-        if plate_id and file_path and well_id and num_cols and channel and cell_phase and num_rows is not None:
+        elif plate_id and file_path and well_id and num_cols and channel and cell_phase and num_rows is not None:
             self.image_gallery = processing_image(plate_id, file_path, num_rows, num_cols, well_id, cell_phase, channel)
-            self.viewer.add_image(self.image_gallery, contrast_limits=[0, 1], rgb=True)
+            self.viewer.add_image(self.image_gallery, name=f'{cell_phase}_gallery', contrast_limits=[0, 1], rgb=True)
 
     def log_parameters(self, plate_id, file_path, num_rows, num_cols, well_id, channel, cell_phase):
         print(f"Plate ID: {plate_id}")
@@ -110,6 +111,7 @@ class MyWidget(QWidget):
         current_layer = self.viewer.layers.selection.active
 
         if current_layer is not None:
+            print(current_layer.name)
             # Specify the path where you want to save the image
             save_path = os.path.expanduser(f"~/Desktop/OmeroScreen_test/figures/{current_layer.name}.tif")
 
