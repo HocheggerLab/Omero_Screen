@@ -9,8 +9,12 @@ from skimage import exposure
 #%%
 
 
-def resize_tf(image: tf.Tensor) -> tf.Tensor:
+def resize_tf(image):
+    # Check if image is grayscale and add channel dimension if necessary
+    if len(image.shape) == 2:
+        image = image[:,:,np.newaxis]
     return tf.image.resize(image, size=(41, 41,), method=tf.image.ResizeMethod.BILINEAR)
+
 
 
 def fet_channel_indices() -> dict:

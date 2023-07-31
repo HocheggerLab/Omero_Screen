@@ -26,15 +26,17 @@ def processing_image(plate_id, file_path, num_rows, num_cols,well_id,cell_phase,
         raise ValueError('Invalid inuput. Please enter a correct cell phase')
     for cc_phase in cc_phases:
         sample_ids = get_cell_phase_id(df=df_gallery, cell_phase=cc_phase, selected_num=num_cols * num_rows)
-        filtered_images = cell_data_extraction(plate_id, sample_ids)
+        filtered_images,masks = cell_data_extraction(plate_id, sample_ids)
 
     if filtered_images:  # Add this line to check if the list is not empty
         image_gallery=plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channel,
                      nrows=num_rows)
+        masks_gallery = plot_gallery(masks, check_phase=cc_phase, channels_option=channel,
+                                     nrows=num_rows)
     else:
         print(f"No images found for phase {cc_phase}. Skipping this phase.")
 
-    return image_gallery
+    return image_gallery,masks_gallery
 
 class MyWidget(QWidget):
     def __init__(self, viewer):
@@ -94,9 +96,9 @@ class MyWidget(QWidget):
                 self.viewer.add_image(self.image_list[i], name=str(i), contrast_limits=[0, 1], rgb=True)
 
         elif plate_id and file_path and well_id and num_cols and channel and cell_phase and num_rows is not None:
-            self.image_gallery = processing_image(plate_id, file_path, num_rows, num_cols, well_id, cell_phase, channel)
+            self.image_gallery,self.mask_gallery= processing_image(plate_id, file_path, num_rows, num_cols, well_id, cell_phase, channel)
             self.viewer.add_image(self.image_gallery, name=f'{cell_phase}_gallery', contrast_limits=[0, 1], rgb=True)
-
+            self.viewer.add_image(self.mask_gallery, name=f'Mask', contrast_limits=[0, 1])
     def log_parameters(self, plate_id, file_path, num_rows, num_cols, well_id, channel, cell_phase):
         print(f"Plate ID: {plate_id}")
         print(f"File path: {file_path}")

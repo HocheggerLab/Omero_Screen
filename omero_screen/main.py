@@ -8,9 +8,6 @@ from stardist.models import StarDist2D
 import pandas as pd
 
 
-
-
-
 @omero_connect
 def main(plate_id, conn=None):
     """
@@ -59,9 +56,6 @@ def main(plate_id, conn=None):
             print("Invalid input. Please enter 'yes' or 'no'.")
     else:
         cellcycle_analysis(df_final, exp_paths.path, meta_data.plate, H3=False)
-
-
-
 
 
 

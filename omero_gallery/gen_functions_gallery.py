@@ -70,7 +70,8 @@ def get_cell_phase_id(df:pd.DataFrame,cell_phase:str,selected_num:int)->dict:
 def cell_data_extraction(plate_id,samples:dict,conn=None):
     meta_data = MetaData(plate_id, conn)
     exp_paths = ExpPaths(meta_data)
-    samples_list = []
+    samples_list_img = []
+    masks_list=[]
     for well_id in samples.keys():
         well = conn.getObject("Well", well_id)
         flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
@@ -82,18 +83,23 @@ def cell_data_extraction(plate_id,samples:dict,conn=None):
 
         for idx in omero_img_index:
             image = well.getImage(idx)
-            samples_list.append(
-                Image_extract(well, image, meta_data, exp_paths, samples[well_id][image.getId()], flatfield_dict).data)
+            imgs,masks=Image_extract(well, image, meta_data, exp_paths, samples[well_id][image.getId()], flatfield_dict)._get_data(width=20)
+
+            samples_list_img.append(imgs)
+            masks_list.append(masks)
 
             # samples_list.append(Image_extract(well,well.getImage(idx) , meta_data, exp_paths, samples[str(well)][well.getImage(idx).getId()], flatfield_dict).data)
-    if samples_list:  # Check if samples_list is not empty
-        if isinstance(samples_list[0],list):
-           flat_list = [item for sublist in samples_list for item in sublist]
+    if samples_list_img:  # Check if samples_list is not empty
+        if isinstance(samples_list_img[0],list):
+           flat_list_img = [item for sublist in samples_list_img for item in sublist]
+           flat_list_mask= [item for sublist in masks_list for item in sublist]
         else:
-           flat_list=samples_list
+           flat_list_img=samples_list_img
+           flat_list_mask=masks_list
     else:
-        flat_list=[]
-    return flat_list
+        flat_list_img=[]
+        flat_list_mask=[]
+    return flat_list_img,flat_list_mask
 
 
 @omero_connect
