@@ -10,11 +10,15 @@ from skimage import exposure
 
 
 def resize_tf(image):
-    # Check if image is grayscale and add channel dimension if necessary
+    if image.shape[0]>41:
+        return image
     if len(image.shape) == 2:
         image = image[:,:,np.newaxis]
-    return tf.image.resize(image, size=(41, 41,), method=tf.image.ResizeMethod.BILINEAR)
-
+    new_image=tf.image.resize(image, size=(41, 41,), method=tf.image.ResizeMethod.BILINEAR)
+    # Add a condition to handle the conversion for tf.Tensor
+    if isinstance(new_image, tf.Tensor):
+        new_image = new_image.numpy()
+    return new_image
 
 
 def fet_channel_indices() -> dict:
@@ -24,15 +28,15 @@ def channel_img_list(cell_data_list: list[tf.Tensor], channel : str) -> list[np.
     channel_indices =fet_channel_indices()
     channel_idx=channel_indices[channel.lower()]
     if channel_idx is None:
-        data_list=[resize_tf(i).numpy().astype('float32') for i in cell_data_list]
+        data_list=[resize_tf(i).astype('float32') for i in cell_data_list]
     else:
         data_list = [resize_tf(i[:, :, channel_idx]).numpy().astype('float32') for i in cell_data_list]
     return data_list
 
-def plot_gallery(image_list:list[np.ndarray],check_phase,channels_option,nrows,):
+def plot_gallery(image_list:list[np.ndarray],channels_option,nrows,):
     # convert the TensorFlow Tensor object to a NumPy array
     nor_list = channel_img_list(cell_data_list=image_list,channel=channels_option)
-    images=plot_digits(nor_list, images_per_row=nrows,phase=check_phase)
+    images=plot_digits(nor_list, images_per_row=nrows)
     return images
 
 
@@ -70,7 +74,7 @@ def merge_images(images, images_per_row, border_size_ratio, border_color):
     return merged_image
 
 
-def plot_digits(sample, images_per_row, phase,):
+def plot_digits(sample, images_per_row,):
     # Get the shape of the individual images
     img_shape = sample[0].shape
     height, width = img_shape[:2]

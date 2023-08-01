@@ -29,9 +29,9 @@ def processing_image(plate_id, file_path, num_rows, num_cols,well_id,cell_phase,
         filtered_images,masks = cell_data_extraction(plate_id, sample_ids)
 
     if filtered_images:  # Add this line to check if the list is not empty
-        image_gallery=plot_gallery(filtered_images, check_phase=cc_phase, channels_option=channel,
+        image_gallery=plot_gallery(filtered_images, channels_option=channel,
                      nrows=num_rows)
-        masks_gallery = plot_gallery(masks, check_phase=cc_phase, channels_option=channel,
+        masks_gallery = plot_gallery(masks, channels_option=channel,
                                      nrows=num_rows)
     else:
         print(f"No images found for phase {cc_phase}. Skipping this phase.")
@@ -92,8 +92,11 @@ class MyWidget(QWidget):
         # Check if the necessary parameters are provided
         if plate_id and file_path and well_id is not None and num_cols is None and channel is None and cell_phase is None and num_rows is None:
             self.image_list = load_well_image(plate_id, well_id)
-            for i in self.image_list.keys():
-                self.viewer.add_image(self.image_list[i], name=str(i), contrast_limits=[0, 1], rgb=True)
+            # for i in self.image_list.keys():
+            well_image_gallery = plot_gallery(self.image_list.values(), channels_option='all',
+                                             nrows=4)
+            self.viewer.add_image(well_image_gallery, name='well_image_gallery', contrast_limits=[0, 1], rgb=True)
+                # self.viewer.add_image(self.image_list[i], name=str(i), contrast_limits=[0, 1], rgb=True)
 
         elif plate_id and file_path and well_id and num_cols and channel and cell_phase and num_rows is not None:
             self.image_gallery,self.mask_gallery= processing_image(plate_id, file_path, num_rows, num_cols, well_id, cell_phase, channel)
