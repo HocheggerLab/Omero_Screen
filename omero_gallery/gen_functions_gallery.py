@@ -7,8 +7,11 @@ from omero_gallery.extract_cell_samples import Image_extract
 from omero_screen.general_functions import save_fig, generate_image, filter_segmentation, omero_connect, scale_img, \
     color_label
 import numpy as np
+import os
 
 
+# Dictionary to store cached images
+cached_images = {}
 
 
 # def get_gallery_df(df,plate_id,well=None,cell_line=None,condition=None,image_id=None):
@@ -73,16 +76,18 @@ def cell_data_extraction(plate_id,samples:dict,conn=None):
     samples_list_img = []
     masks_list=[]
     for well_id in samples.keys():
-        well = conn.getObject("Well", well_id)
-        flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
-        omero_img_list=[well.getImage(number).getId() for number in range(len(list(well.listChildren())))]
+        # well = conn.getObject("Well", well_id)
+        # flatfield_dict = flatfieldcorr(well, meta_data, exp_paths)
+        # omero_img_list=[well.getImage(number).getId() for number in range(len(list(well.listChildren())))]
+        well_images= load_and_cache_well_image(plate_id,well_id)
+        omero_img_list = list(well_images.values())
         omero_img_index=[]
         for images_id in samples[well_id].keys():
-            if int(images_id) in omero_img_list:
+            if np.isin(int(images_id), omero_img_list):
                omero_img_index.append(omero_img_list.index(images_id))
 
         for idx in omero_img_index:
-            image = well.getImage(idx)
+            image = well_images[idx]
             imgs,masks=Image_extract(well, image, meta_data, exp_paths, samples[well_id][image.getId()], flatfield_dict)._get_data(width=20)
 
             samples_list_img.append(imgs)
@@ -100,7 +105,19 @@ def cell_data_extraction(plate_id,samples:dict,conn=None):
         flat_list_img=[]
         flat_list_mask=[]
     return flat_list_img,flat_list_mask
-
+def load_and_cache_well_image(plate_id, well_id):
+    cache_dir = "cached_images"
+    if not os.path.isdir(cache_dir):
+        os.makedirs(cache_dir)
+    # Check if image is already cached on disk
+    cache_path = f"cached_images/{well_id}.npy"
+    if os.path.exists(cache_path):
+        img_list = np.load(cache_path,allow_pickle=True).item()
+    else:
+        img_list=load_well_image(plate_id, well_id)
+        # Save the image to disk
+        np.save(cache_path, img_list)
+    return img_list
 
 @omero_connect
 def load_well_image(plate_id,well_id,conn=None):
@@ -121,6 +138,9 @@ def load_well_image(plate_id,well_id,conn=None):
         img_list[idx]=comb_image
 
     return img_list
+
+
+
 
 def get_img_dict(meta_data,flatfield_dict,image):
         """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image"""

@@ -3,7 +3,7 @@ import os
 from qtpy.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLineEdit, QLabel
 import pandas as pd
 from omero_gallery.galleries_plot import plot_gallery
-from omero_gallery.gen_functions_gallery import get_cell_phase_id,cell_data_extraction,load_well_image
+from omero_gallery.gen_functions_gallery import get_cell_phase_id,cell_data_extraction,load_and_cache_well_image
 
 
 def get_gallery_df(df,plate_id,well_id=None):
@@ -44,8 +44,6 @@ class MyWidget(QWidget):
 
         self.viewer = viewer
         self.setLayout(QVBoxLayout())
-
-
 
         self.plate_id_edit = QLineEdit()
         self.file_path_edit = QLineEdit()
@@ -91,7 +89,7 @@ class MyWidget(QWidget):
 
         # Check if the necessary parameters are provided
         if plate_id and file_path and well_id is not None and num_cols is None and channel is None and cell_phase is None and num_rows is None:
-            self.image_list = load_well_image(plate_id, well_id)
+            self.image_list = load_and_cache_well_image(plate_id, well_id)
             # for i in self.image_list.keys():
             well_image_gallery = plot_gallery(self.image_list.values(), channels_option='all',
                                              nrows=4)
