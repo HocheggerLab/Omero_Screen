@@ -1,24 +1,20 @@
 #!/usr/bin/env python
-import omero
-from omero_screen.metadata import Defaults, MetaData, ProjectSetup
+import numpy as np
+import pandas as pd
+import torch
+from cellpose import models
+from ezomero import get_image
+from skimage import measure
+from omero_screen.metadata import MetaData, ProjectSetup
 from omero_screen.flatfield_corr import flatfieldcorr
 from omero_screen.general_functions import (
-    save_fig,
     generate_image,
     filter_segmentation,
     omero_connect,
     scale_img,
-    color_label,
 )
+from omero_screen.metadata import Defaults
 from omero_screen.omero_functions import upload_masks
-
-
-from skimage import measure, io
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import torch
-from cellpose import models
 
 
 class Image:
@@ -54,17 +50,19 @@ class Image:
         self.well_pos = f"{row_list[self._well.row]}{self._well.column}"
 
     def _get_img_dict(self):
-        """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image"""
+        """divide image_array with flatfield correction mask and return dictionary "channel_name": corrected image
+        The image is an array of the shape (t, z, y, x, c). For further processing we use MIPs of the z-stack.
+        The function generates a dictionary {channel: corrected image} with the shape (t, y, x) for each channel.
+        """
         img_dict = {}
+        image, array = get_image(self._conn, self.omero_image.getId())
+        mip = np.max(array, axis=1)
+
         for channel in list(
-            self.channels.items()
+                self.channels.items()
         ):  # produces a tuple of channel key value pair (ie ('DAPI':0)
-            corr_img = (
-                generate_image(self.omero_image, channel[1])
-                / self._flatfield_dict[channel[0]]
-            )
-            # bgcorr_img = corr_img - np.percentile(corr_img, 0.2) +1
-            img_dict[channel[0]] = corr_img
+            corrected_img = mip[..., channel[1]] / self._flatfield_dict[channel[0]]
+            img_dict[channel[0]] = corrected_img
         return img_dict
 
     def _get_models(self):
@@ -85,11 +83,18 @@ class Image:
             model_type=Defaults["MODEL_DICT"]["nuclei"],
         )
         n_channels = [[0, 0]]
-        n_mask_array, n_flows, n_styles = segmentation_model.eval(
-            scale_img(self.img_dict["DAPI"]), channels=n_channels, diameter=10,
-            normalize=False
-        )
-        return filter_segmentation(n_mask_array)
+        timepoints, height, width = self.img_dict["DAPI"].shape
+
+        segmented_masks = np.zeros((timepoints, height, width))
+        for timepoint in range(self.img_dict["DAPI"].shape[0]):  # for each timepoint
+            n_mask_array, n_flows, n_styles = segmentation_model.eval(
+                scale_img(self.img_dict["DAPI"][timepoint, ...]),
+                channels=n_channels,
+                diameter=10,
+                normalize=False,
+            )
+            segmented_masks[timepoint, ...] = filter_segmentation(n_mask_array)
+        return segmented_masks
 
     def _c_segmentation(self):
         """perform cellpose segmentation using cell mask"""
@@ -98,20 +103,23 @@ class Image:
             model_type=self._get_models(),
         )
         c_channels = [[2, 1]]
-        # combine the 2 channel numpy array for cell segmentation with the nuclei channel
-        comb_image = scale_img(np.dstack ([self.img_dict["DAPI"], self.img_dict["Tub"]]))
-        c_masks_array, c_flows, c_styles = segmentation_model.eval(
-            comb_image, channels=c_channels, diameter=40,
-            normalize=False
-        )
-        # return cleaned up mask using filter function
-        return filter_segmentation(c_masks_array)
+        timepoints, height, width = self.img_dict["DAPI"].shape
+
+        segmented_masks = np.zeros((timepoints, height, width))
+        for timepoint in range(self.img_dict["DAPI"].shape[0]):
+            comb_image = scale_img(np.dstack([self.img_dict["DAPI"][timepoint, ...], self.img_dict["Tub"][timepoint, ...]]))
+            c_masks_array, c_flows, c_styles = segmentation_model.eval(
+                comb_image, channels=c_channels, diameter=40,
+                normalize=False
+            )
+            segmented_masks[timepoint, ...] = filter_segmentation(c_masks_array)
+        return segmented_masks
 
     def _download_masks(self, image_id):
         """Download masks from OMERO server and save as numpy arrays"""
-        masks = self._conn.getObject("Image", image_id)
-        n_mask = generate_image(masks, 0)
-        c_mask = generate_image(masks, 1)
+        masks_object, masks = get_image(self._conn, image_id)
+        n_mask = masks[..., 0]
+        c_mask = masks[..., 1]
         return n_mask, c_mask
 
     def _get_cyto(self):
@@ -204,8 +212,8 @@ class ImageProperties:
         ).dropna(axis=0, how="any")
         if channel == "DAPI":
             nucleus_data["integrated_int_DAPI"] = (
-                nucleus_data["intensity_mean_DAPI_nucleus"]
-                * nucleus_data["area_nucleus"]
+                    nucleus_data["intensity_mean_DAPI_nucleus"]
+                    * nucleus_data["area_nucleus"]
             )
         cell_data = self._get_properties(
             self._image.c_mask, channel, "cell", featurelist
@@ -272,9 +280,9 @@ if __name__ == "__main__":
 
     @omero_connect
     def feature_extraction_test(conn=None):
-        meta_data = MetaData(conn, plate_id=1237)
-        project_data = ProjectSetup(1237, conn)
-        well = conn.getObject("Well", 15401)
+        meta_data = MetaData(conn, plate_id=53)
+        project_data = ProjectSetup(53, conn)
+        well = conn.getObject("Well", 105)
         omero_image = well.getImage(0)
         flatfield_dict = flatfieldcorr(meta_data, project_data, conn)
         image = Image(conn, well, omero_image, meta_data, project_data, flatfield_dict)

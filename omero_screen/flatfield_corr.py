@@ -187,7 +187,7 @@ def generate_corr_dict(plate, channels, conn, dataset_id):
 
 def random_imgs(plate):
     """
-    Selects a random image from each well in the given plate.
+    Selects 100 random images (or less) across all wells in a given plate.
 
     Parameters:
     plate (omero.gateway.PlateWrapper): PlateWrapper object representing the plate.
@@ -207,7 +207,8 @@ def random_imgs(plate):
 def aggregate_imgs(img_list, channel, conn):
     """
     Aggregates images in a well for a specified channel and generates correction mask using the Aggregator Module.
-
+    Zstack images are collapsed to a single image by taking the maximum intensity at each pixel location.
+    For time lapse images we select 1 maximum of 10 randomly selected timepoints.
     Parameters:
     img_list (list): List of image IDs to aggregate.
     channel (dict): Dictionary containing channel information.
